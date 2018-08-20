@@ -18,8 +18,7 @@
 	},
 	"autoload":{
 		"psr-4":{
-			"ClientbasePro\\": "ClientbasePro/"
-		},
-		"files":["ClientbaseProFunctions.php"]
+			"ClientbasePro\\ClientbasePro\\": "src/"
+		}
     }
 }
