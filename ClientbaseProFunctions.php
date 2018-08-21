@@ -2,6 +2,22 @@
 
 	// файл с PHP функциями проекта ClientbasePro
 
+	// предопределённые константы
+define('NULL_DATETIME', '0000-00-00 00:00:00');
+define('NULL_DATE', '0000-00-00');	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	// преобразует кол-во секунд $sec в формат чч:мм:сс      
 function TimeFormat(int $sec) {
