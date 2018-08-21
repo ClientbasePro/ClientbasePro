@@ -46,6 +46,8 @@ function SetNumber($number, $code='495', $plus='+') {
     $strlen = strlen($str);
         // сначала иностранные, начинающиеся на 810
     if ('810'==$str[0].$str[1].$str[2]) return $str;
+		// номера РБ
+    if (0===strpos($str,'375') && 12==$strlen) return $plus.$str;
         // далее короткие внутренние 3-хзначные
     if (3==$strlen && 1000>$str) return $str;
         // далее российские 11-значные номера, начинающиеся на 7 или 8
