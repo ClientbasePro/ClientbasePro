@@ -4,7 +4,7 @@
 
 
 	// преобразует кол-во секунд $sec в формат чч:мм:сс      
-function TimeFormat1(int $sec) {
+function TimeFormat2(int $sec) {
     if (!is_numeric($sec)) return "00:00:00";
     else {
         $hour = intval(floor($sec/3600));
