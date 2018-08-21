@@ -34,6 +34,42 @@ function TimeFormat(int $sec) {
     }
 }
 
+    // функция возвращает форматированный номер +7XXXXXXXXXXX
+	// $number - номер телефона в любом формате
+	// $code - код города по умолчанию, по умолчанию 495 Москва
+	// $plus - отображать ли "+" перед выводимым номером
+function SetNumber($number, $code='495', $plus='+') {
+    $plus = (!$plus || '+'==$plus) ? $plus : '+';
+		// оставляем только цифры в $number
+	$str = strval($number);
+    $str = preg_replace('/\D/i','',$str);
+    $strlen = strlen($str);
+        // сначала иностранные, начинающиеся на 810
+    if ('810'==$str[0].$str[1].$str[2]) return $str;
+        // далее короткие внутренние 3-хзначные
+    if (3==$strlen && 1000>$str) return $str;
+        // далее российские 11-значные номера, начинающиеся на 7 или 8
+    if (11==$strlen && ('7'==$str[0] || '8'==$str[0])) { $str = substr($str,1); return $plus.'7'.$str; }
+        // далее 10-значные, к ним дописываем 7
+    if (10==$strlen) return $plus.'7'.$str; 
+        // суммируем длину кода и длину номера
+    $code = preg_replace('/\D/i', '', strval($code));
+    if ($code && 10==($strlen+strlen($code))) return $plus.'7'.$code.$str;
+    return '';
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
     // функция обрабатывает задачу по синхронизации КБ и 1С
 	// int $someTableId - id таблицы, в которой синхронизируются данные
 	// json $someData - перечень данных к синхронизации в формате JSON, [{"GUID":"XXXXXXX","fieldId":"fieldValue"}], поиск строки для синхронизации выполняется по GUID
