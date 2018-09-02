@@ -67,8 +67,9 @@ function GetCurrency($date, $currency='EUR') {
 	// $number - номер телефона в любом формате
 	// $code - код города по умолчанию, по умолчанию 495 Москва
 	// $plus - отображать ли "+" перед выводимым номером
-function SetNumber($number, $code='495', $plus='+') {
+function SetNumber($number, $code='', $plus='+') {
     $plus = (!$plus || '+'==$plus) ? $plus : '+';
+	if (!$code && DEFAULT_PHONE_CODE) $code = DEFAULT_PHONE_CODE;
 		// оставляем только цифры в $number
 	$str = strval($number);
     $str = preg_replace('/\D/i','',$str);
