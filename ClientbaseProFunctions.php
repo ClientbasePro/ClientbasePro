@@ -67,12 +67,12 @@ function UpdateAccount($accountId=0,$phone='',$email='') {
 	$accountId = intval($accountId);
     $email = ($email && filter_var($email,FILTER_VALIDATE_EMAIL)) ? $email : '';
     $phone = ($phone=SetNumber($phone)) ? $phone : '';
-    if (!$accountId || (!$email && !$phone)) return false;
+    if (!$accountId || (!$email && !$phone)) return 'invalid or empty input data';
 		// проверка id таблиц и полей
 	$tableId = intval(ACCOUNT_TABLE);
 	$fieldPhone = intval(ACCOUNT_PHONE_FIELD);
 	$fieldEmail = intval(ACCOUNT_EMAIL_FIELD);
-	if (!$tableId || !$fieldPhone || !$fieldEmail) return false;
+	if (!$tableId || !$fieldPhone || !$fieldEmail) return 'invalid table or fields settings';
     $row = sql_fetch_assoc($tableId, 'f'.$fieldPhone.' AS phone, f'.$fieldEmail.' AS email', "status=0 AND id='".$accountId."' LIMIT 1");
         // добавление E-mail
     if ($email && false!==strpos($row['email'],$email)) $upd['f'.$fieldEmail] = (($row['email'])?$row['email'].'; ':'').$email;
@@ -84,8 +84,8 @@ function UpdateAccount($accountId=0,$phone='',$email='') {
         if ($p_) $upd['f'.$fieldPhone] = (($row['phone'])?$row['phone'].', ':'').$phone;            
     }
         // обновляем контактную информацию клиента
-    if ($upd) data_update($tableId, EVENTS_ENABLE, $upd, "id='".$accountId."' LIMIT 1");
-    return true;
+    if ($upd) { data_update($tableId, EVENTS_ENABLE, $upd, "id='".$accountId."' LIMIT 1"); return $upd; }
+    return 'no data to update';
 }
 
 
