@@ -126,13 +126,13 @@ function GetAccount($number='',$email='',$someId=0) {
         }
     }
 		// 3 попытка - поиск через контактное лицо
-	if ($contactTableId && $contactFieldPhone && $contactFieldEmail && $contactFieldAccountId) {}
+	if ($contactTableId && $contactFieldPhone && $contactFieldEmail && $contactFieldAccountId) {
 		$contact = GetContact($number,$email);
 		if ($contact['id']) {
 			$row = sql_fetch_assoc(data_select_field($contactTableId, 'f'.$contactFieldAccountId.' AS accountId', "id='".$contact['id']."' LIMIT 1"));
 			if ($row['accountId']) return $row['accountId'];		
 		}	
-	}	
+	}
     return false;
 }
 
