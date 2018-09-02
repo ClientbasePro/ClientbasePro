@@ -61,6 +61,35 @@ function SetNumber($number, $code='495', $plus='+') {
 }
 
 
+    // функция обновляет контактные данные ($phone и $email) клиента $accountId
+function UpdateAccount($accountId=0,$phone='',$email='') {
+		// проверка входных данных
+	$accountId = intval($accountId);
+    $email = ($email && filter_var($email,FILTER_VALIDATE_EMAIL)) ? $email : '';
+    $phone = ($phone=SetNumber($phone)) ? $phone : '';
+    if (!$accountId || (!$email && !$phone)) return false;
+		// проверка id таблиц и полей
+	$tableId = intval(ACCOUNT_TABLE);
+	$fieldPhone = intval(ACCOUNT_PHONE_FIELD);
+	$fieldEmail = intval(ACCOUNT_EMAIL_FIELD);
+	if (!$tableId || !$fieldPhone || !$fieldEmail) return false;
+    $row = sql_fetch_assoc($tableId, 'f'.$fieldPhone.' AS phone, f'.$fieldEmail.' AS email', "status=0 AND id='".$accountId."' LIMIT 1");
+        // добавление E-mail
+    if ($email && false!==strpos($row['email'],$email)) $upd['f'.$fieldEmail] = (($row['email'])?$row['email'].'; ':'').$email;
+        // добавление телефона
+    if ($phone) {
+        $p_ = 1;
+        $phones = explode(',', $row['phone']);
+        foreach ($phones as $p) if (SetNumber($p)==$phone) { $p_ = 0; break; }
+        if ($p_) $upd['f'.$fieldPhone] = (($row['phone'])?$row['phone'].', ':'').$phone;            
+    }
+        // обновляем контактную информацию клиента
+    if ($upd) data_update($tableId, EVENTS_ENABLE, $upd, "id='".$accountId."' LIMIT 1");
+    return true;
+}
+
+
+
 
 
 
