@@ -34,6 +34,35 @@ function TimeFormat(int $sec) {
     }
 }
 
+        // функция получает курс валюты $currency с сайта ЦБ РФ на дату $date
+		// без параметров получаем курс Евро на сегодня
+function GetCurrency($date, $currency='EUR') {
+		// проверка входных данных
+	if (!$date) $date = date("d/m/Y");
+	else $date = date("d/m/Y", strtotime($date));
+		// ссылка на сайте ЦБ РФ
+	$url = 'http://www.cbr.ru/scripts/XML_daily.asp?date_req='.$date;
+		// запрос к сайту ЦБ РФ
+	$curl = curl_init($url);
+	curl_setopt_array($curl, array(CURLOPT_RETURNTRANSFER=>true));
+    if ($response=curl_exec($curl)) {
+		$pattern = '/<Valute ID=\"R.{5}\".+?<CharCode>'.$currency.'<\/CharCode>(.*?)<\/Valute\>/is';
+		preg_match($pattern, $response, $m);
+		preg_match("/<Value>(.*?)<\/Value>/is", $m[1], $r);
+		return floatval(str_replace(",", ".", $r[1]));
+	}
+	return false;
+}
+
+
+
+
+
+
+
+
+
+
     // функция возвращает форматированный номер +7XXXXXXXXXXX
 	// $number - номер телефона в любом формате
 	// $code - код города по умолчанию, по умолчанию 495 Москва
