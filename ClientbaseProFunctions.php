@@ -91,6 +91,101 @@ function SetNumber($number, $code='', $plus='+') {
 }
 
 
+    // функция возвращает id клиента по номеру телефона $number или эл.почте $email (кроме $someId)
+function GetAccount($number='',$email='',$someId=0) {
+        // проверка входных условий
+    $number = SetNumber($number);
+    if ((!$number && !$email) || (!$number && $email && !filter_var($email,FILTER_VALIDATE_EMAIL))) return 'invalid or empty input data';
+		// проверка id таблиц и полей
+	$accountTableId = intval(ACCOUNT_TABLE);
+	$accountFieldPhone = intval(ACCOUNT_FIELD_PHONE);
+	$accountFieldEmail = intval(ACCOUNT_FIELD_EMAIL);
+	$accountFieldDouble = intval(ACCOUNT_FIELD_DOUBLE);
+	if (!$accountTableId || !$accountFieldPhone || !$accountFieldEmail) return 'invalid table or fields settings';
+	$contactTableId = intval(CONTACT_TABLE);
+	$contactFieldPhone = intval(CONTACT_FIELD_PHONE);
+	$contactFieldEmail = intval(CONTACT_FIELD_EMAIL);
+	$contactFieldAccountId = intval(CONTACT_FIELD_ACCOUNTID);
+        // набор условий для SQL-запросов
+    $numberCond = $emailCond = $mainCond = $idCond = '';
+    $shortPhoneCond = ($number<1000) ? "" : " OR f".$accountFieldPhone." LIKE '%".$number."%'";
+    if ($number && !$email) $numberCond = " AND (f".$accountFieldPhone."='".$number."' {$shortPhoneCond}) ";
+    if ($email && !$number) $emailCond = " AND (f".$accountFieldEmail."='".$email."' OR f".$accountFieldEmail." LIKE '%".$email."%') ";
+    if ($number && $email) $mainCond = " AND ((f".$accountFieldPhone."='".$number."' {$shortPhoneCond}) OR (f".$accountFieldEmail."='".$email."' OR f".$accountFieldEmail." LIKE '%".$email."%')) ";
+    if ($someId) $idCond = " AND id!='".$ID."' ";
+	if ($accountFieldDouble) $doubleCond = " AND f".$accountFieldDouble."='' ";
+        // 1 попытка - прямое совпадение или LIKE
+	$row = sql_fetch_assoc(data_select_field($accountTableId, 'id', "status=0 {$numberCond} {$emailCond} {$mainCond} {$idCond} {$doubleCond} ORDER BY add_time DESC LIMIT 1"));
+    if ($row['id']) return $row['id'];
+        // 2 попытка - поиск по номеру телефона
+    if ($number) {
+        $res = data_select_field($accountTableId, 'id, f".$accountFieldPhone." as phone', "status=0 AND f".$accountFieldPhone."!='' {$doubleCond} {$idCond} ORDER BY add_time DESC");
+        while ($row=sql_fetch_assoc($res)) {
+            $phones = explode(',', $row['phone']);
+            foreach ($phones as $p) if (SetNumber($p)==$number) return $row['id'];
+        }
+    }
+		// 3 попытка - поиск через контактное лицо
+	if ($contactTableId && $contactFieldPhone && $contactFieldEmail && $contactFieldAccountId) {}
+		$contact = GetContact($number,$email);
+		if ($contact['id']) {
+			$row = sql_fetch_assoc(data_select_field($contactTableId, 'f'.$contactFieldAccountId.' AS accountId', "id='".$contact['id']."' LIMIT 1"));
+			if ($row['accountId']) return $row['accountId'];		
+		}	
+	}	
+    return false;
+}
+
+
+    // функция возвращает id контактного лица по номеру телефона $number или эл.почте $email (кроме $someId)
+function GetContact($number='',$email='',$someId=0) {
+        // проверка входных условий
+    $number = SetNumber($number);
+    if ((!$number && !$email) || (!$number && $email && !filter_var($email,FILTER_VALIDATE_EMAIL))) return 'invalid or empty input data';
+		// проверка id таблиц и полей	
+	$tableId = intval(CONTACT_TABLE);
+	$fieldPhone = intval(CONTACT_FIELD_PHONE);
+	$fieldEmail = intval(CONTACT_FIELD_EMAIL);
+	$fieldAccountId = intval(CONTACT_FIELD_ACCOUNTID);
+	if (!$tableId || !$fieldPhone || !$fieldEmail) return 'invalid table or fields settings';
+        // набор условий для SQL-запросов
+    $numberCond = $emailCond = $mainCond = $idCond = '';
+    $shortPhoneCond = ($number<1000) ? "" : " OR f".$fieldPhone." LIKE '%".$number."%'";
+    if ($number && !$email) $numberCond = " AND (f".$fieldPhone."='".$number."' {$shortPhoneCond}) ";
+    if ($email && !$number) $emailCond = " AND (f".$fieldEmail."='".$email."' OR f".$fieldEmail." LIKE '%".$email."%') ";
+    if ($number && $email) $mainCond = " AND ((f".$fieldPhone."='".$number."' {$shortPhoneCond}) OR (f".$fieldEmail."='".$email."' OR f".$fieldEmail." LIKE '%".$email."%')) ";
+    if ($someId) $idCond = " AND id!='".$ID."' ";
+        // 1 попытка - прямое совпадение или LIKE
+	$row = sql_fetch_assoc(data_select_field($tableId, 'id', "status=0 {$numberCond} {$emailCond} {$mainCond} {$idCond} ORDER BY add_time DESC LIMIT 1"));
+    if ($row['id']) return $row['id'];
+        // 2 попытка - поиск по номеру телефона
+    if ($number) {
+        $res = data_select_field($tableId, 'id, f".$fieldPhone." as phone', "status=0 AND f".$fieldPhone."!=''  {$idCond} ORDER BY add_time DESC");
+        while ($row=sql_fetch_assoc($res)) {
+            $phones = explode(',', $row['phone']);
+            foreach ($phones as $p) if (SetNumber($p)==$number) return $row['id'];
+        }
+    }
+    return false;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // функция обновляет контактные данные ($phone и $email) клиента $accountId
 function UpdateAccount($accountId=0,$phone='',$email='') {
 		// проверка входных данных
@@ -100,8 +195,8 @@ function UpdateAccount($accountId=0,$phone='',$email='') {
     if (!$accountId || (!$email && !$phone)) return 'invalid or empty input data';
 		// проверка id таблиц и полей
 	$tableId = intval(ACCOUNT_TABLE);
-	$fieldPhone = intval(ACCOUNT_PHONE_FIELD);
-	$fieldEmail = intval(ACCOUNT_EMAIL_FIELD);
+	$fieldPhone = intval(ACCOUNT_FIELD_PHONE);
+	$fieldEmail = intval(ACCOUNT_FIELD_EMAIL);
 	if (!$tableId || !$fieldPhone || !$fieldEmail) return 'invalid table or fields settings';
     $row = sql_fetch_assoc(data_select_field($tableId, 'f'.$fieldPhone.' AS phone, f'.$fieldEmail.' AS email', "status=0 AND id='".$accountId."' LIMIT 1"));
         // добавление E-mail
