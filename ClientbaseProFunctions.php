@@ -160,7 +160,7 @@ function GetContact($number='',$email='',$someId=0) {
     if ($row['id']) return $row['id'];
         // 2 попытка - поиск по номеру телефона
     if ($number) {
-        $res = data_select_field($tableId, 'id, f".$fieldPhone." as phone', "status=0 AND f".$fieldPhone."!=''  {$idCond} ORDER BY add_time DESC");
+        $res = data_select_field($tableId, 'id, f'.$fieldPhone.' as phone', "status=0 AND f".$fieldPhone."!=''  {$idCond} ORDER BY add_time DESC");
         while ($row=sql_fetch_assoc($res)) {
             $phones = explode(',', $row['phone']);
             foreach ($phones as $p) if (SetNumber($p)==$number) return $row['id'];
