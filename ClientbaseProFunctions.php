@@ -169,23 +169,6 @@ function GetContact($number='',$email='',$someId=0) {
     return false;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // функция обновляет контактные данные ($phone и $email) клиента $accountId
 function UpdateAccount($accountId=0,$phone='',$email='') {
 		// проверка входных данных
@@ -213,8 +196,29 @@ function UpdateAccount($accountId=0,$phone='',$email='') {
     return 'no data to update';
 }
 
-
-
+  // функция возвращает массив геоданных по IP-адресу
+function GetIPAddressData($IP='') {
+    // начальная проверка данных
+  if (!$IP || ($IP && !filter_var($IP,FILTER_VALIDATE_IP))) return false;
+    // создание cURL
+  $ch = curl_init('http://ipgeobase.ru:7020/geo?ip='.$IP);
+  curl_setopt($ch, CURLOPT_HEADER, false);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  $string = curl_exec($ch);
+  curl_close($ch);
+    // парсим ответ
+  $xml = simplexml_load_string($string);
+  $data = '';
+  foreach ($xml as $key=>$value) {
+    foreach ($value as $key2=>$value2) {
+      if ('city'==$key2) $data['city'] = $value2;
+	  elseif ('region'==$key2) $data['region'] = $value2;     
+      else if ('country'==$key2) $data['country'] = $value2;
+    }
+  }
+  if ($data) return $data;
+  return false;  
+}
 
 
 
