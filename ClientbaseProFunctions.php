@@ -112,7 +112,7 @@ function GetAccount($number='',$email='',$someId=0) {
     if ($number && !$email) $numberCond = " AND (f".$accountFieldPhone."='".$number."' {$shortPhoneCond}) ";
     if ($email && !$number) $emailCond = " AND (f".$accountFieldEmail."='".$email."' OR f".$accountFieldEmail." LIKE '%".$email."%') ";
     if ($number && $email) $mainCond = " AND ((f".$accountFieldPhone."='".$number."' {$shortPhoneCond}) OR (f".$accountFieldEmail."='".$email."' OR f".$accountFieldEmail." LIKE '%".$email."%')) ";
-    if ($someId) $idCond = " AND id!='".$ID."' ";
+    if ($someId) $idCond = " AND id!='".$someId."' ";
 	if ($accountFieldDouble) $doubleCond = " AND f".$accountFieldDouble."='' ";
         // 1 попытка - прямое совпадение или LIKE
 	$row = sql_fetch_assoc(data_select_field($accountTableId, 'id', "status=0 {$numberCond} {$emailCond} {$mainCond} {$idCond} {$doubleCond} ORDER BY add_time DESC LIMIT 1"));
@@ -219,9 +219,6 @@ function GetIPAddressData($IP='') {
   if ($data) return $data;
   return false;  
 }
-
-
-
 
 
 
