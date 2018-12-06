@@ -5,7 +5,7 @@
 	// предопределённые константы
 define('NULL_DATETIME', '0000-00-00 00:00:00');
 define('NULL_DATE', '0000-00-00');	
-	
+
 	
 	
 	
@@ -53,12 +53,6 @@ function GetCurrency($date, $currency='EUR') {
 	}
 	return false;
 }
-
-
-
-
-
-
 
 
 
@@ -127,9 +121,9 @@ function GetAccount($number='',$email='',$someId=0) {
     }
 		// 3 попытка - поиск через контактное лицо
 	if ($contactTableId && $contactFieldPhone && $contactFieldEmail && $contactFieldAccountId) {
-		$contact = GetContact($number,$email);
-		if ($contact['id']) {
-			$row = sql_fetch_assoc(data_select_field($contactTableId, 'f'.$contactFieldAccountId.' AS accountId', "id='".$contact['id']."' LIMIT 1"));
+		$contact = intval(GetContact($number,$email));
+		if ($contact) {
+			$row = sql_fetch_assoc(data_select_field($contactTableId, 'f'.$contactFieldAccountId.' AS accountId', "id='".$contact."' LIMIT 1"));
 			if ($row['accountId']) return $row['accountId'];		
 		}	
 	}
