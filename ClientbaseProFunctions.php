@@ -51,6 +51,7 @@ function GetCurrency($date, $currency='EUR') {
 		preg_match("/<Value>(.*?)<\/Value>/is", $m[1], $r);
 		return floatval(str_replace(",", ".", $r[1]));
 	}
+	curl_close($curl);
 	return false;
 }
 
@@ -303,6 +304,42 @@ function Sync1CTask(int $someTableId, $someData, $prefix="cb_", $updateLimit=99,
     $a['thisTime'] = TimeFormat(time()-$start);										// время завершения обработки
     return $a;
 }
+
+
+
+    // функция добавляет или убирает (по $type = add/delete) значение $value в список значений из поля $fieldId в таблицу $tableId в запись $lineId
+function SetCheckList($tableId, $fieldId, $lineId, $value, $type='add') {
+	// список возможных значений $type
+  $types = array('add','delete');
+    // проверка входных данных
+  if (!in_array($type,$types) || !$value || !$fieldId || !$lineId || !$tableId) return false;
+    // получаем список всех галочек из натсроек поля
+  $row = sql_fetch_assoc(sql_select_field(FIELDS_TABLE, "type_value", "id='".$fieldId."' LIMIT 1", $tableId));
+  $all_list = explode("\r\n", $row['type_value']);
+    // получаем список отмеченных галочек из записи $lineId
+  $row = sql_fetch_assoc(data_select_field($tableId, 'f'.$fieldId.' AS field', "status=0 AND id='".$lineId."' LIMIT 1"));
+  $checked_list = explode("\r\n", $row['field']);
+    // проходим по списку всех галочек и добавляем/убираем значение $value в итоговый массив $all_array
+  foreach ($all_list as $current) {
+    if ('add'==$type) $cond = (in_array($current,$checked_list) || $current==$value);
+    if ('delete'==$type) $cond = (in_array($current,$checked_list) && $current!=$value);
+    if ($cond) $all_array[] = $current;
+  }
+    // массив для обновления записи $lineId
+  $upd['f'.$fieldId] = implode("\r\n", $all_array);
+  data_update($tableId, EVENTS_ENABLE, $upd ,"id='".$lineId."' LIMIT 1");
+  return true;
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
