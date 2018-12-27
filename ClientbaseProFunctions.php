@@ -331,6 +331,61 @@ function SetCheckList($tableId, $fieldId, $lineId, $value, $type='add') {
   return true;
 }
 
+  // функция очищает поле $fieldId строки $lineId таблицы $tableID и удаляет привязанные файлы
+function DeleteFiles($tableId, $fieldId, $lineId) {
+    // проверка входных данных
+  if (!$tableId || !$fieldId || !$lineId) return false;
+  $tableId = intval($tableId);
+  $fieldId = intval($fieldId);
+  $lineId = intval($lineId);
+  if (!$tableId || !$fieldId || !$lineId) return false;
+    // получаем значение поля, проходим по каждому элементу и удаляем соответствующий файл с диска
+  $row = sql_fetch_assoc(data_select_field($tableId, 'f'.$fieldId.' AS files', "id='".$lineId."' LIMIT 1"));
+  $files = explode("\r\n", $row['files']);
+  foreach ($files as $file) @unlink(get_file_path($fieldId, $lineId, $file));
+    // очищаем поле с файлами
+  data_update($tableId, array('f'.$fieldId=>''), "id='".$lineId."' LIMIT 1");
+  return true;
+}
+
+  // функция копирует файлы из $source в $destination (оба - массивы ('tableId', 'lineId', 'fieldId'))
+function CopyFiles($source, $destination) {
+    // проверка входных данных
+  if (!$source || !is_array($source) || !$destination || !is_array($destination)) return false;
+  $source['tableId'] = intval($source['tableId']);
+  $source['lineId'] = intval($source['lineId']);
+  $source['fieldId'] = intval($source['fieldId']);
+  $destination['tableId'] = intval($destination['tableId']);
+  $destination['lineId'] = intval($destination['lineId']);
+  $destination['fieldId'] = intval($destination['fieldId']);
+  if (!$source['tableId'] || !$source['lineId'] || !$source['fieldId'] || !$destination['tableId'] || !$destination['lineId'] || !$destination['fieldId']) return false;
+    // получаем список файлов в источнике
+  $source['files'] = sql_fetch_assoc(data_select_field($source['tableId'], 'f'.$source['fieldId'].' AS files', "id='".$source['lineId']."' LIMIT 1"));
+  $sourceFiles = explode("\r\n", trim($source['files']['files']));
+    // получаем список файлов в получателе
+  $destination['files'] = sql_fetch_assoc(data_select_field($destination['tableId'], 'f'.$destination['fieldId'].' AS files', "id='".$destination['lineId']."' LIMIT 1"));
+  $destinationFiles = explode("\r\n", $destination['files']['files']);
+    // проходим по всем файлам источника и копируем их, имена файлов добавляем в $destinationFiles
+  foreach ($sourceFiles as $file) {
+      // создаём папку
+    create_data_file_dirs($destination['fieldId'], $destination['lineId'], $file); 
+      // копируем файл и добавляем его имя в $destination['files']
+    $file1 = get_file_path($source['fieldId'], $source['lineId'], $file);
+    $file2 = get_file_path($destination['fieldId'], $destination['lineId'], $file);
+    if (copy($file1,$file2)) $destinationFiles[] = $file;
+  }
+    // удаляем пустые элементы $destinationFiles
+  foreach ($destinationFiles as $key=>$value) if (!$value) unset($destinationFiles[$key]);
+    // обновляем получателя
+  data_update($destination['tableId'], EVENTS_ENABLE, array('f'.$destination['fieldId']=>implode("\r\n",$destinationFiles)), "id='".$destination['lineId']."' LIMIT 1");
+  return true;
+}
+
+
+
+
+
+
 
 
 
