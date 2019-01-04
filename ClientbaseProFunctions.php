@@ -383,17 +383,72 @@ function CopyFiles($source, $destination) {
 
 
 
+  // функция прибавляет $pause рабочих дней к дате $start с учётом массива выходных дней $holidays ('Y-m-d')
+  // $pause может быть положительным и отрицательным
+  // $holidays может быть равно -1, в этом случае не он не учитывается
+function AddWorkDays($start='',$pause=0,$holidays='') {
+    // проверка входных данных
+  $start = ($start && NULL_DATETIME<$start && NULL_DATE<=$start) ? date('Y-m-d',strtotime($start)) : date('Y-m-d');
+  if (!($pause=intval($pause))) return $start;
+    // промежуточная функция для форматирования элементов $holidays
+  $tmp = function($date) { return date('Y-m-d',strtotime($date)); };
+	// массив выходных дней
+  if (-1!=$holidays) {
+	if (!$holidays || !is_array($holidays)) {
+	  if (HOLIDAYS_TABLE && HOLIDAYS_FIELD_DATE) {
+ 	    $res = data_select_field(HOLIDAYS_TABLE, 'DATE_FORMAT(f'.HOLIDAYS_FIELD_DATE.',"%Y-%m-%d") AS date', "status=0");
+        while ($row=sql_fetch_assoc($res)) $holidays[] = $row['date'];
+	  }
+    }
+    else $holidays = array_map($tmp,$holidays);	  
+  }
+	// расчёт итоговой даты
+  $j = 0;
+  $index = (0>$pause) ? -1 : 1;
+  $pause = abs($pause);
+  $str = strtotime($start);
+  for ($i=1; $i<1000; $i++) {
+ 	$y = date('Y-m-d', $s=$str+$i*$index*86400);
+ 	$w = date('w', $s);
+ 	if (($w>0 && $w<6) && !in_array($y,$holidays)) $j++;
+ 	if  ($pause<=$j) return $y;
+  }
+  return $start;
+}
 
-
-
-
-
-
-
-
-
-
-
+  // функция вычисляет кол-во рабочих дней между $start и $end с учётом массива выходных дней $holidays ('Y-m-d')
+  // $holidays может быть равно -1, в этом случае не он не учитывается
+function GetWorkDaysDiff($start='',$end='',$holidays='') {
+    // проверка входных данных
+  $start = ($start && NULL_DATETIME<$start && NULL_DATE<=$start) ? date('Y-m-d',strtotime($start)) : date('Y-m-d');
+  $end = ($end && NULL_DATETIME<$end && NULL_DATE<=$end) ? date('Y-m-d',strtotime($end)) : date('Y-m-d');
+  if ($start==$end) return 0;
+    // промежуточная функция для форматирования элементов $holidays
+  $tmp = function($date) { return date('Y-m-d',strtotime($date)); };
+	// массив выходных дней
+  if (-1!=$holidays) {
+	if (!$holidays || !is_array($holidays)) {
+	  if (HOLIDAYS_TABLE && HOLIDAYS_FIELD_DATE) {
+ 	    $res = data_select_field(HOLIDAYS_TABLE, 'DATE_FORMAT(f'.HOLIDAYS_FIELD_DATE.',"%Y-%m-%d") AS date', "status=0");
+        while ($row=sql_fetch_assoc($res)) $holidays[] = $row['date'];
+	  }
+    }
+    else $holidays = array_map($tmp,$holidays);	  
+  }
+    // расчёт разницы
+  $start = strtotime($start);
+  $end = strtotime($end);
+  $diff = ($end-$start)/86400;
+  $j = 0;
+  $index = (0>$diff) ? -1 : 1;
+  $diff = abs($diff);
+  for ($i=1;$i<=$diff;$i++) {
+    $y = date('Y-m-d', $s=$start+$i*$index*86400);
+ 	$w = date('w', $s);
+ 	if (($w>0 && $w<6) && !in_array($y,$holidays)) $j++;
+  }
+  return $j;
+}
 
 
 
