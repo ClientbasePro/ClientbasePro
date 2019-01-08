@@ -307,13 +307,15 @@ function Sync1CTask(int $someTableId, $someData, $prefix="cb_", $updateLimit=99,
 
 
 
-    // функция добавляет или убирает (по $type = add/delete) значение $value в список значений из поля $fieldId в таблицу $tableId в запись $lineId
+    // функция добавляет или убирает (по $type = add/delete) значение $value (или массив значений) в список значений из поля $fieldId в таблицу $tableId в запись $lineId
 function SetCheckList($tableId, $fieldId, $lineId, $value, $type='add') {
 	// список возможных значений $type
   $types = array('add','delete');
     // проверка входных данных
   if (!in_array($type,$types) || !$value || !$fieldId || !$lineId || !$tableId) return false;
-    // получаем список всех галочек из натсроек поля
+    // если $value 1 значение, переводим его в вид массива
+  $values = (!is_array($value)) ? array($value) : $value;
+    // получаем список всех галочек из настроек поля
   $row = sql_fetch_assoc(sql_select_field(FIELDS_TABLE, "type_value", "id='".$fieldId."' LIMIT 1", $tableId));
   $all_list = explode("\r\n", $row['type_value']);
     // получаем список отмеченных галочек из записи $lineId
@@ -321,8 +323,8 @@ function SetCheckList($tableId, $fieldId, $lineId, $value, $type='add') {
   $checked_list = explode("\r\n", $row['field']);
     // проходим по списку всех галочек и добавляем/убираем значение $value в итоговый массив $all_array
   foreach ($all_list as $current) {
-    if ('add'==$type) $cond = (in_array($current,$checked_list) || $current==$value);
-    if ('delete'==$type) $cond = (in_array($current,$checked_list) && $current!=$value);
+    if ('add'==$type) $cond = (in_array($current,$checked_list) || in_array($current,$values));
+    if ('delete'==$type) $cond = (in_array($current,$checked_list) && !in_array($current,$values));
     if ($cond) $all_array[] = $current;
   }
     // массив для обновления записи $lineId
@@ -420,19 +422,14 @@ function AddWorkDays($start='',$pause=0,$holidays='') {
   // $holidays может быть равно -1, в этом случае не он не учитывается
 function GetWorkDaysDiff($start='',$end='',$holidays='') {
     // проверка входных данных
-  $start = ($start && NULL_DATETIME<$start && NULL_DATE<=$start) ? date('Y-m-d',strtotime($start)) : date('Y-m-d');
-  $end = ($end && NULL_DATETIME<$end && NULL_DATE<=$end) ? date('Y-m-d',strtotime($end)) : date('Y-m-d');
+  $start = ($start && NULL_DATETIME<$start && NULL_DATE<$start) ? date('Y-m-d',strtotime($start)) : date('Y-m-d');
+  $end = ($end && NULL_DATETIME<$end && NULL_DATE<$end) ? date('Y-m-d',strtotime($end)) : date('Y-m-d');
   if ($start==$end) return 0;
     // промежуточная функция для форматирования элементов $holidays
   $tmp = function($date) { return date('Y-m-d',strtotime($date)); };
 	// массив выходных дней
   if (-1!=$holidays) {
-	if (!$holidays || !is_array($holidays)) {
-	  if (HOLIDAYS_TABLE && HOLIDAYS_FIELD_DATE) {
- 	    $res = data_select_field(HOLIDAYS_TABLE, 'DATE_FORMAT(f'.HOLIDAYS_FIELD_DATE.',"%Y-%m-%d") AS date', "status=0");
-        while ($row=sql_fetch_assoc($res)) $holidays[] = $row['date'];
-	  }
-    }
+	if (!$holidays || !is_array($holidays)) { if (HOLIDAYS_TABLE && HOLIDAYS_FIELD_DATE) $holidays[] = GetArrayFromTable(HOLIDAYS_TABLE,HOLIDAYS_FIELD_DATE); }
     else $holidays = array_map($tmp,$holidays);	  
   }
     // расчёт разницы
