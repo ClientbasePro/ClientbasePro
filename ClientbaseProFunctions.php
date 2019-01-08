@@ -442,7 +442,7 @@ function GetWorkDaysDiff($start='',$end='',$holidays='') {
   for ($i=1;$i<=$diff;$i++) {
     $y = date('Y-m-d', $s=$start+$i*$index*86400);
  	$w = date('w', $s);
- 	if (($w>0 && $w<6) && !in_array($y,$holidays)) $j++;
+ 	if (($w>0 && $w<6) && !in_array($y,$holidays)) $j+=$index;
   }
   return $j;
 }
