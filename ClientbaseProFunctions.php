@@ -370,7 +370,7 @@ function CopyFiles($source, $destination) {
     // проходим по всем файлам источника и копируем их, имена файлов добавляем в $destinationFiles
   foreach ($sourceFiles as $file) {
       // создаём папку
-    create_data_file_dirs($destination['fieldId'], $destination['lineId'], $file); 
+    create_data_file_dirs($destination['fieldId'], $destination['lineId'], $file);
       // копируем файл и добавляем его имя в $destination['files']
     $file1 = get_file_path($source['fieldId'], $source['lineId'], $file);
     $file2 = get_file_path($destination['fieldId'], $destination['lineId'], $file);
@@ -465,6 +465,17 @@ function GetArrayFromTable($tableId=0,$fieldId=0,$cond='',$function='') {
   if ($function) $tmp = array_map($function, $tmp);
   return $tmp;
 }
+
+    // возвращает select, построенный по данным массива $selectData с выделенным значением $someValue
+    // структура $selectData: $value=>array('color'=>$color,'short'=>$shortValue)
+function GetSelect($someValue, array $selectData) {
+  $sel = '<option value=""></option>';
+  foreach ($selectData as $option=>$data) $sel .= '<option style="background-color:'.$data['color'].';" value="'.$option.'" '.(($option==$someValue)?"selected":"").'>'.$data['short'].'</option>';
+  return $sel;
+}
+
+
+
 
 
 
