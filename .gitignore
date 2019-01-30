@@ -1,4 +1,8 @@
-logo.png
-*.bak
-.gitignore
-.gitattributes
+  # исключаем всё
+*
+  # кроме 
+!/.git/
+!.gitignore
+!composer.json
+!README.md
+!ClientbaseProFunctions.php
