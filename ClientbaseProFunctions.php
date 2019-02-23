@@ -64,8 +64,9 @@ function SetNumber($number, $code='', $plus='+') {
     if (3==$strlen && 1000>$str) return $str;
         // далее российские 11-значные номера, начинающиеся на 7 или 8
     if (11==$strlen && ('7'==$str[0] || '8'==$str[0])) { $str = substr($str,1); return $plus.'7'.$str; }
+	if (12==$strlen && '779'==$str[0].$str[1].$str[2]) { $str = substr($str,2); return $plus.'7'.$str; }
         // далее 10-значные, к ним дописываем 7
-    if (10==$strlen) return $plus.'7'.$str; 
+    if (10==$strlen) return $plus.'7'.$str;
         // суммируем длину кода и длину номера
     $code = preg_replace('/\D/i', '', strval($code));
     if ($code && 10==($strlen+strlen($code))) return $plus.'7'.$code.$str;
@@ -467,7 +468,7 @@ function GetArrayFromTable($tableId=0,$fieldId=0,$cond='',$function='') {
     // установка условия
   $cond = ($cond) ? $cond : 1;
     // цикл
-  $tmp = '';
+  $tmp = [];
   $res = data_select_field($tableId, 'id,f'.$fieldId.' AS value', $cond);
   while ($row=sql_fetch_assoc($res)) $tmp[$row['id']] = $row['value'];
     // маппинг
