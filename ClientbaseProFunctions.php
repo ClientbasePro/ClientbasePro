@@ -469,7 +469,7 @@ function GetArrayFromTable($tableId=0,$fieldId=0,$cond='',$function='') {
   $cond = ($cond) ? $cond : 1;
     // цикл
   $tmp = [];
-  $res = data_select_field($tableId, 'id,f'.$fieldId.' AS value', $cond);
+  $res = sql_query("SELECT id, f".$fieldId." AS value FROM ".$tableId." WHERE ".$cond);
   while ($row=sql_fetch_assoc($res)) $tmp[$row['id']] = $row['value'];
     // маппинг
   if ($function) $tmp = array_map($function, $tmp);
