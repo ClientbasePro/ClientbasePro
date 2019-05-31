@@ -60,6 +60,8 @@ function SetNumber($number, $code='', $plus='+') {
     if ('810'==$str[0].$str[1].$str[2]) return $str;
         // номера РБ
     if (0===strpos($str,'375') && 12==$strlen) return $plus.$str;
+	  // Молдова
+	if (0===strpos($str,'373') && 12==$strlen) return $plus.$str;
         // далее короткие внутренние 3-хзначные
     if (3==$strlen && 1000>$str) return $str;
         // далее российские 11-значные номера, начинающиеся на 7 или 8
@@ -100,9 +102,10 @@ function GetAccount($number='',$email='',$someId=0) {
         // 1 попытка - прямое совпадение или LIKE
     $row = sql_fetch_assoc(data_select_field($accountTableId, 'id', "status=0 {$numberCond} {$emailCond} {$mainCond} {$idCond} {$doubleCond} ORDER BY add_time DESC LIMIT 1"));
     if ($row['id']) return $row['id'];
-        // 2 попытка - поиск по номеру телефона
+        // 2 попытка - поиск по номеру телефона, кроме совпадения по шаблонам [0-9]{3} и +7[0-9]{10} (чтобы повторно не искать среди одиночных номеров по формату)
     if ($number) {
-        $res = data_select_field($accountTableId, 'id, f'.$accountFieldPhone.' as phone', "status=0 AND f".$accountFieldPhone."!='' {$doubleCond} {$idCond} ORDER BY add_time DESC");
+        $patternCond = " AND f".$accountFieldPhone." NOT RLIKE '^[0-9]{3}$' AND f".$accountFieldPhone." NOT RLIKE '^[+]7[0-9]{10}$' ";
+		$res = data_select_field($accountTableId, 'id, f'.$accountFieldPhone.' as phone', "status=0 AND f".$accountFieldPhone."!='' {$doubleCond} {$idCond} {$patternCond} ORDER BY add_time DESC");
         while ($row=sql_fetch_assoc($res)) {
             $phones = explode(',', $row['phone']);
             foreach ($phones as $p) if (SetNumber($p)==$number) return $row['id'];
@@ -145,7 +148,8 @@ function GetContact($number='',$email='',$someId=0) {
     if ($row['id']) return $row['id'];
         // 2 попытка - поиск по номеру телефона
     if ($number) {
-        $res = data_select_field($tableId, 'id, f'.$fieldPhone.' as phone', "status=0 AND f".$fieldPhone."!=''  {$idCond} ORDER BY add_time DESC");
+        $patternCond = " AND f".$fieldPhone." NOT RLIKE '^[0-9]{3}$' AND f".$fieldPhone." NOT RLIKE '^[+]7[0-9]{10}$' ";
+		$res = data_select_field($tableId, 'id, f'.$fieldPhone.' as phone', "status=0 AND f".$fieldPhone."!=''  {$idCond} {$patternCond} ORDER BY add_time DESC");
         while ($row=sql_fetch_assoc($res)) {
             $phones = explode(',', $row['phone']);
             foreach ($phones as $p) if (SetNumber($p)==$number) return $row['id'];
