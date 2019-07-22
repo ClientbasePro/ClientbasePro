@@ -61,7 +61,7 @@ function SetNumber($number, $code='', $plus='+') {
         // номера РБ
     if (0===strpos($str,'375') && 12==$strlen) return $plus.$str;
 	  // Молдова
-	if (0===strpos($str,'373') && 12==$strlen) return $plus.$str;
+	if (0===strpos($str,'373') && in_array($strlen,array(11,12))) return $plus.$str;
         // далее короткие внутренние 3-хзначные
     if (3==$strlen && 1000>$str) return $str;
         // далее российские 11-значные номера, начинающиеся на 7 или 8
