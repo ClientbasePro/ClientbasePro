@@ -463,21 +463,34 @@ function GetWorkDaysDiff($start='',$end='',$holidays='') {
 
   // функция возвращаем массив id=>$value таблицы $tableId по полю $fieldId, с доп.условием $cond
   // к итоговому массиву применяется функция $function через array_map
-function GetArrayFromTable($tableId=0,$fieldId=0,$cond='',$function='') {
+function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
     // проверка входных данных
-  if (!$tableId || !$fieldId) return false;
+  if (!$tableId || !$fields) return false;
   $tableId = intval($tableId);
-  $fieldId = intval($fieldId);
-  if (!$tableId || !$fieldId) return false;
     // установка условия
   $cond = ($cond) ? $cond : 1;
-    // цикл
-  $tmp = [];
-  $res = sql_query("SELECT id, f".$fieldId." AS value FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
-  while ($row=sql_fetch_assoc($res)) $tmp[$row['id']] = $row['value'];
-    // маппинг
-  if ($function) $tmp = array_map($function, $tmp);
-  return $tmp;
+    // результирующий массив
+  $tmp = [];  
+    // если $fields - число, формируем массив id=>поле
+  if (is_numeric($fields)) {
+	$res = sql_query("SELECT id, f".$fields." AS value FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
+    while ($row=sql_fetch_assoc($res)) $tmp[$row['id']] = $row['value'];
+      // маппинг
+    if ($function) $tmp = array_map($function, $tmp);
+    return $tmp;	  
+  }
+    // если $fields - массив, формируем результирующий массив id=>array('field'=>'value')  
+  elseif (is_array($fields)) {
+    foreach ($fields as $field=>$name) {
+	  if (is_numeric($field)) $field = 'f'.$field;
+	  $f[] = $field.' AS '.$name;
+	}
+	$fields = implode(',', $f);
+	$res = sql_query("SELECT id, ".$fields." FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
+    while ($row=sql_fetch_assoc($res)) { $id = $row['id']; unset($row['id']); $tmp[$id] = $row; }
+	return $tmp;
+  }
+  return false;  
 }
 
 
