@@ -304,10 +304,10 @@ function Sync1CTask(int $someTableId, $someData, $prefix="cb_", $updateLimit=99,
     }     
         // 5. массив для обновления $upd - записываем в КБ
     $i = 0;
-    foreach ($upd as $lineId=>$fieldsData) while ($i<$updateLimit) { data_update($someTableId, EVENTS_ENABLE, $fieldsData, "id='".$lineId."' LIMIT 1"); $i++; }
+    foreach ($upd as $lineId=>$fieldsData) { data_update($someTableId, EVENTS_ENABLE, $fieldsData, "id='".$lineId."' LIMIT 1"); if ($i<$updateLimit) $i++; else break; }
         // 6. массив новых записей (остался от $data) - добавляем в КБ
     $i = 0;
-    foreach ($data as $GUID=>$row) while ($i<$insertLimit) { data_insert($someTableId, EVENTS_ENABLE, $row); $i++; }
+    foreach ($data as $GUID=>$row) { data_insert($someTableId, EVENTS_ENABLE, $row); if ($i<$insertLimit) $i++; else break; }
         // 7. вывод данных
     $a  = array('upd'=>$upd, 'ins'=>$data);
     if (count($upd)<=$updateLimit && count($data)<=$insertLimit) $a['done'] = 1;    // признак, что задача в целом обработана
