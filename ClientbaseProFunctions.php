@@ -51,7 +51,7 @@ function GetCurrency($date, $currency='EUR') {
     // $plus - отображать ли "+" перед выводимым номером
 function SetNumber($number, $code='', $plus='+') {
     $plus = (!$plus || '+'==$plus) ? $plus : '+';
-    if (!$code && DEFAULT_PHONE_CODE) $code = DEFAULT_PHONE_CODE;
+    if (!$code && defined(DEFAULT_PHONE_CODE)) $code = DEFAULT_PHONE_CODE;
         // оставляем только цифры в $number
     $str = strval($number);
     $str = preg_replace('/\D/i','',$str);
