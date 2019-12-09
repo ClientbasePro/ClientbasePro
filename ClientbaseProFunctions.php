@@ -485,7 +485,7 @@ function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
 	  if (is_numeric($field)) $field = 'f'.$field;
 	  $f[] = $field.' AS '.$name;
 	}
-	$fields = implode(',', $f);
+	$fields = implode(', ', $f);
 	$res = sql_query("SELECT id, ".$fields." FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
     while ($row=sql_fetch_assoc($res)) { $id = $row['id']; unset($row['id']); $tmp[$id] = $row; }
 	return $tmp;
