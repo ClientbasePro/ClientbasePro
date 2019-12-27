@@ -78,29 +78,32 @@ function SetNumber($number, $code='', $plus='+') {
 
     // функция возвращает id клиента по номеру телефона $number или эл.почте $email (кроме $someId)
 function GetAccount($number='',$email='',$someId=0) {
-        // проверка входных условий
-    $number = SetNumber($number);
-    if ((!$number && !$email) || (!$number && $email && !filter_var($email,FILTER_VALIDATE_EMAIL))) return false;
+		// формируем массив телефонных номеров из $number
+	if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
+	elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
+		// формируем массив адресов E-mail из $email
+	if (is_array($email)) { foreach ($email as $mail) if ($mail && filter_var($mail,FILTER_VALIDATE_EMAIL)) $emails[$mail] = $mail; }
+	elseif ($email) foreach (explode(',',$email) as $m1) foreach (explode(';',$m1) as $m2) if ($m2 && filter_var($m2,FILTER_VALIDATE_EMAIL)) $emails[$m2] = $m2;
+		// если нет ни одного отформатированного контакта, завершаем
+    if (!$numbers && !$emails) return false;
         // проверка id таблиц и полей
     $accountTableId = intval(ACCOUNT_TABLE);
     $accountFieldPhone = intval(ACCOUNT_FIELD_PHONE);
     $accountFieldEmail = intval(ACCOUNT_FIELD_EMAIL);
     $accountFieldDouble = intval(ACCOUNT_FIELD_DOUBLE);
-    if (!$accountTableId || !$accountFieldPhone || !$accountFieldEmail) return false;
+    if (!$accountTableId || (!$accountFieldPhone && !$accountFieldEmail)) return false;
     $contactTableId = intval(CONTACT_TABLE);
     $contactFieldPhone = intval(CONTACT_FIELD_PHONE);
     $contactFieldEmail = intval(CONTACT_FIELD_EMAIL);
     $contactFieldAccountId = intval(CONTACT_FIELD_ACCOUNTID);
         // набор условий для SQL-запросов
-    $numberCond = $emailCond = $mainCond = $idCond = '';
-    $shortPhoneCond = ($number<1000) ? "" : " OR f".$accountFieldPhone." LIKE '%".$number."%'";
-    if ($number && !$email) $numberCond = " AND (f".$accountFieldPhone."='".$number."' {$shortPhoneCond}) ";
-    if ($email && !$number) $emailCond = " AND (f".$accountFieldEmail."='".$email."' OR f".$accountFieldEmail." LIKE '%".$email."%') ";
-    if ($number && $email) $mainCond = " AND ((f".$accountFieldPhone."='".$number."' {$shortPhoneCond}) OR (f".$accountFieldEmail."='".$email."' OR f".$accountFieldEmail." LIKE '%".$email."%')) ";
+    $mainCond = $idCond = '';
+	if ($accountFieldPhone) foreach ($numbers as $num) $mainCond .= ((!$mainCond)?"":" OR ")."f".$accountFieldPhone."='".$num."' ".((1000<$num)?" OR f".$accountFieldPhone." LIKE '%".$num."%' ":"");
+	if ($accountFieldEmail) foreach ($emails as $mail) $mainCond .= ((!$mainCond)?"":" OR ")."f".$accountFieldEmail."='".$mail."' OR f".$accountFieldEmail." LIKE '%".$mail."%' ";
     if ($someId) $idCond = " AND id!='".$someId."' ";
     if ($accountFieldDouble) $doubleCond = " AND f".$accountFieldDouble."='' ";
         // 1 попытка - прямое совпадение или LIKE
-    $row = sql_fetch_assoc(data_select_field($accountTableId, 'id', "status=0 {$numberCond} {$emailCond} {$mainCond} {$idCond} {$doubleCond} ORDER BY add_time DESC LIMIT 1"));
+    $row = sql_fetch_assoc(data_select_field($accountTableId, 'id', "status=0 AND ({$mainCond}) {$idCond} {$doubleCond} ORDER BY add_time DESC LIMIT 1"));
     if ($row['id']) return $row['id'];
         // 2 попытка - поиск по номеру телефона, кроме совпадения по шаблонам [0-9]{3} и +7[0-9]{10} (чтобы повторно не искать среди одиночных номеров по формату)
     if ($number) {
@@ -108,7 +111,7 @@ function GetAccount($number='',$email='',$someId=0) {
 		$res = data_select_field($accountTableId, 'id, f'.$accountFieldPhone.' as phone', "status=0 AND f".$accountFieldPhone."!='' {$doubleCond} {$idCond} {$patternCond} ORDER BY add_time DESC");
         while ($row=sql_fetch_assoc($res)) {
             $phones = explode(',', $row['phone']);
-            foreach ($phones as $p) if (SetNumber($p)==$number) return $row['id'];
+            foreach ($phones as $p) if (in_array(SetNumber($p),$numbers)) return $row['id'];
         }
     }
         // 3 попытка - поиск через контактное лицо
@@ -125,26 +128,29 @@ function GetAccount($number='',$email='',$someId=0) {
 
     // функция возвращает id контактного лица по номеру телефона $number или эл.почте $email (кроме $someId)
 function GetContact($number='',$email='',$someId=0) {
-        // проверка входных условий
-    $number = SetNumber($number);
-    if ((!$number && !$email) || (!$number && $email && !filter_var($email,FILTER_VALIDATE_EMAIL))) return false;
-        // проверка id таблиц и полей   
+    	// формируем массив телефонных номеров из $number
+	if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
+	elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
+		// формируем массив адресов E-mail из $email
+	if (is_array($email)) { foreach ($email as $mail) if ($mail && filter_var($mail,FILTER_VALIDATE_EMAIL)) $emails[$mail] = $mail; }
+	elseif ($email) foreach (explode(',',$email) as $m1) foreach (explode(';',$m1) as $m2) if ($m2 && filter_var($m2,FILTER_VALIDATE_EMAIL)) $emails[$m2] = $m2;
+		// если нет ни одного отформатированного контакта, завершаем
+    if (!$numbers && !$emails) return false;
+		// проверка id таблиц и полей   
     $tableId = intval(CONTACT_TABLE);
     $fieldPhone = intval(CONTACT_FIELD_PHONE);
     $fieldEmail = intval(CONTACT_FIELD_EMAIL);
     $fieldAccountId = intval(CONTACT_FIELD_ACCOUNTID);
     $contactFieldDouble = intval(CONTACT_FIELD_DOUBLE);
-    if (!$tableId || !$fieldPhone || !$fieldEmail) return false;
+    if (!$tableId || (!$fieldPhone && !$fieldEmail)) return false;
         // набор условий для SQL-запросов
-    $numberCond = $emailCond = $mainCond = $idCond = '';
-    $shortPhoneCond = ($number<1000) ? "" : " OR f".$fieldPhone." LIKE '%".$number."%'";
-    if ($number && !$email) $numberCond = " AND (f".$fieldPhone."='".$number."' {$shortPhoneCond}) ";
-    if ($email && !$number) $emailCond = " AND (f".$fieldEmail."='".$email."' OR f".$fieldEmail." LIKE '%".$email."%') ";
-    if ($number && $email) $mainCond = " AND ((f".$fieldPhone."='".$number."' {$shortPhoneCond}) OR (f".$fieldEmail."='".$email."' OR f".$fieldEmail." LIKE '%".$email."%')) ";
+    $mainCond = $idCond = '';
+	if ($fieldPhone) foreach ($numbers as $num) $mainCond .= ((!$mainCond)?"":" OR ")."f".$fieldPhone."='".$num."' ".((1000<$num)?" OR f".$fieldPhone." LIKE '%".$num."%' ":"");
+	if ($fieldEmail) foreach ($emails as $mail) $mainCond .= ((!$mainCond)?"":" OR ")."f".$fieldEmail."='".$mail."' OR f".$fieldEmail." LIKE '%".$mail."%' ";
     if ($contactFieldDouble) $doubleCond = " AND f".$contactFieldDouble."='' ";
     if ($someId) $idCond = " AND id!='".$ID."' ";
         // 1 попытка - прямое совпадение или LIKE
-    $row = sql_fetch_assoc(data_select_field($tableId, 'id', "status=0 {$numberCond} {$emailCond} {$mainCond} {$idCond} {$doubleCond} ORDER BY add_time DESC LIMIT 1"));
+    $row = sql_fetch_assoc(data_select_field($tableId, 'id', "status=0 AND ({$mainCond}) {$idCond} {$doubleCond} ORDER BY add_time DESC LIMIT 1"));
     if ($row['id']) return $row['id'];
         // 2 попытка - поиск по номеру телефона
     if ($number) {
@@ -152,7 +158,7 @@ function GetContact($number='',$email='',$someId=0) {
 		$res = data_select_field($tableId, 'id, f'.$fieldPhone.' as phone', "status=0 AND f".$fieldPhone."!=''  {$idCond} {$patternCond} ORDER BY add_time DESC");
         while ($row=sql_fetch_assoc($res)) {
             $phones = explode(',', $row['phone']);
-            foreach ($phones as $p) if (SetNumber($p)==$number) return $row['id'];
+            foreach ($phones as $p) if (in_array(SetNumber($p),$numbers)) return $row['id'];
         }
     }
     return false;
@@ -160,12 +166,17 @@ function GetContact($number='',$email='',$someId=0) {
 
 
     // функция обновляет контактные данные ($phone и $email) контрагента $accountId
-function UpdateAccount($accountId=0,$phone='',$email='') {
+function UpdateAccount($accountId=0,$number='',$email='') {
         // проверка входных данных
     $accountId = intval($accountId);
-    $email = ($email && filter_var($email,FILTER_VALIDATE_EMAIL)) ? $email : '';
-    $phone = ($phone=SetNumber($phone)) ? $phone : '';
-    if (!$accountId || (!$email && !$phone)) return false;
+    	// формируем массив телефонных номеров из $number
+	if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
+	elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
+		// формируем массив адресов E-mail из $email
+	if (is_array($email)) { foreach ($email as $mail) if ($mail && filter_var($mail,FILTER_VALIDATE_EMAIL)) $emails[$mail] = $mail; }
+	elseif ($email) foreach (explode(',',$email) as $m1) foreach (explode(';',$m1) as $m2) if ($m2 && filter_var($m2,FILTER_VALIDATE_EMAIL)) $emails[$m2] = $m2;
+		// если нет ни одного отформатированного контакта, завершаем
+    if (!$accountId || (!$emails && !$numbers)) return false;
         // проверка id таблиц и полей
     $tableId = intval(ACCOUNT_TABLE);
     $fieldPhone = intval(ACCOUNT_FIELD_PHONE);
@@ -173,44 +184,41 @@ function UpdateAccount($accountId=0,$phone='',$email='') {
     if (!$tableId || !$fieldPhone || !$fieldEmail) return false;
     $row = sql_fetch_assoc(data_select_field($tableId, 'f'.$fieldPhone.' AS phone, f'.$fieldEmail.' AS email', "status=0 AND id='".$accountId."' LIMIT 1"));
         // добавление E-mail
-    if ($email && false===strpos($row['email'],$email)) $upd['f'.$fieldEmail] = (($row['email'])?$row['email'].'; ':'').$email;
+    foreach ($emails as $email) if (false===strpos($row['email'],$email)) $upd['f'.$fieldEmail] = (($row['email'])?$row['email'].'; ':'').$email;
         // добавление телефона
-    if ($phone) {
-        $continue = 1;
-        $phones = explode(',', $row['phone']);
-        foreach ($phones as $p) if (SetNumber($p)==$phone) { $continue = 0; break; }
-        if ($continue) $upd['f'.$fieldPhone] = (($row['phone'])?$row['phone'].', ':'').$phone;            
-    }
+	foreach (explode(',',$row['phone']) as $phone) if ($phone=SetNumber($phone)) unset($numbers[$phone]);	
+	if ($numbers) $upd['f'.$fieldPhone] = (($row['phone'])?$row['phone'].', ':'').implode(', ',$numbers);    
         // обновляем контактную информацию клиента
     if ($upd) { data_update($tableId, EVENTS_ENABLE, $upd, "id='".$accountId."' LIMIT 1"); return $upd; }
     return false;
 }
 
 
-    // функция обновляет контактные данные ($phone и $email) контакта $accountId
-function UpdateContact($accountId=0,$phone='',$email='') {
+    // функция обновляет контактные данные ($phone и $email) контакта $contactId
+function UpdateContact($contactId=0,$number='',$email='') {
         // проверка входных данных
-    $accountId = intval($accountId);
-    $email = ($email && filter_var($email,FILTER_VALIDATE_EMAIL)) ? $email : '';
-    $phone = ($phone=SetNumber($phone)) ? $phone : '';
-    if (!$accountId || (!$email && !$phone)) return false;
+    $contactId = intval($contactId);
+    	// формируем массив телефонных номеров из $number
+	if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
+	elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
+		// формируем массив адресов E-mail из $email
+	if (is_array($email)) { foreach ($email as $mail) if ($mail && filter_var($mail,FILTER_VALIDATE_EMAIL)) $emails[$mail] = $mail; }
+	elseif ($email) foreach (explode(',',$email) as $m1) foreach (explode(';',$m1) as $m2) if ($m2 && filter_var($m2,FILTER_VALIDATE_EMAIL)) $emails[$m2] = $m2;
+		// если нет ни одного отформатированного контакта, завершаем
+    if (!$contactId || (!$emails && !$numbers)) return false;
         // проверка id таблиц и полей
     $tableId = intval(CONTACT_TABLE);
     $fieldPhone = intval(CONTACT_FIELD_PHONE);
     $fieldEmail = intval(CONTACT_FIELD_EMAIL);
     if (!$tableId || !$fieldPhone || !$fieldEmail) return false;
-    $row = sql_fetch_assoc(data_select_field($tableId, 'f'.$fieldPhone.' AS phone, f'.$fieldEmail.' AS email', "status=0 AND id='".$accountId."' LIMIT 1"));
+    $row = sql_fetch_assoc(data_select_field($tableId, 'f'.$fieldPhone.' AS phone, f'.$fieldEmail.' AS email', "status=0 AND id='".$contactId."' LIMIT 1"));
         // добавление E-mail
-    if ($email && false===strpos($row['email'],$email)) $upd['f'.$fieldEmail] = (($row['email'])?$row['email'].'; ':'').$email;
+    foreach ($emails as $email) if (false===strpos($row['email'],$email)) $upd['f'.$fieldEmail] = (($row['email'])?$row['email'].'; ':'').$email;
         // добавление телефона
-    if ($phone) {
-        $continue = 1;
-        $phones = explode(',', $row['phone']);
-        foreach ($phones as $p) if (SetNumber($p)==$phone) { $continue = 0; break; }
-        if ($continue) $upd['f'.$fieldPhone] = (($row['phone'])?$row['phone'].', ':'').$phone;            
-    }
+    foreach (explode(',',$row['phone']) as $phone) if ($phone=SetNumber($phone)) unset($numbers[$phone]);	
+	if ($numbers) $upd['f'.$fieldPhone] = (($row['phone'])?$row['phone'].', ':'').implode(', ',$numbers);
         // обновляем контактную информацию контакта
-    if ($upd) { data_update($tableId, EVENTS_ENABLE, $upd, "id='".$accountId."' LIMIT 1"); return $upd; }
+    if ($upd) { data_update($tableId, EVENTS_ENABLE, $upd, "id='".$contactId."' LIMIT 1"); return $upd; }
     return false;
 }
 
@@ -511,6 +519,3 @@ function MakeRandom($length=4,$chars='abcdef1234567890') {
   elseif ('syncId'==$length) $password = MakeRandom(8).'-'.MakeRandom().'-'.MakeRandom().'-'.MakeRandom().'-'.MakeRandom(12);
   return $password;
 }
-
-
-
