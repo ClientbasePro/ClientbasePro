@@ -472,15 +472,15 @@ function GetWorkDaysDiff($start='',$end='',$holidays='') {
   // функция возвращаем массив id=>$value таблицы $tableId по полю $fieldId, с доп.условием $cond
   // к итоговому массиву применяется функция $function через array_map
 function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
-    // проверка входных данных
+  // установка условия
+  $cond = ($cond) ? $cond : 1;  
+  // проверка входных данных
   if (!$tableId || !$fields) {
-	$res = sql_query("SELECT id, fio FROM ".USERS_TABLE);
+	$res = sql_query("SELECT id, fio FROM ".USERS_TABLE." WHERE ".$cond);
     while ($row=sql_fetch_assoc($res)) $tmp[$row['id']] = $row['fio'];
     return $tmp;
   }
-  $tableId = intval($tableId);
-    // установка условия
-  $cond = ($cond) ? $cond : 1;
+  $tableId = intval($tableId);  
     // результирующий массив
   $tmp = [];  
     // если $fields - число, формируем массив id=>поле
