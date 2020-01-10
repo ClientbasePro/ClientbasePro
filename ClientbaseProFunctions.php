@@ -526,5 +526,7 @@ function MakeRandom($length=4,$chars='abcdef1234567890') {
 
     // функция возвращает bool, если дата $date не установлена
 function IsNullDate($date='') {  
-  return (!$date || NULL_DATETIME==$date || NULL_DATE==$date) ? true : false;
+  if (!$date) return true;
+  $date = date('Y-m-d H:i:s', strtotime(!$date));
+  return (!$date || NULL_DATETIME==$date) ? true : false;
 }
