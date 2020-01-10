@@ -523,3 +523,8 @@ function MakeRandom($length=4,$chars='abcdef1234567890') {
   elseif ('syncId'==$length) $password = MakeRandom(8).'-'.MakeRandom().'-'.MakeRandom().'-'.MakeRandom().'-'.MakeRandom(12);
   return $password;
 }
+
+    // функция возвращает bool, если дата $date не установлена
+function IsNullDate($date='') {  
+  return (!$date || NULL_DATETIME==$date || NULL_DATE==$date) ? true : false;
+}
