@@ -491,7 +491,7 @@ function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
     while ($row=sql_fetch_assoc($res)) $tmp[$row['id']] = $row['value'];
       // маппинг
     if ($function) $tmp = array_map($function, $tmp);
-    return $tmp;	  
+    return $tmp;
   }
     // если $fields - массив, формируем результирующий массив id=>array('field'=>'value')  
   elseif (is_array($fields)) {
@@ -501,9 +501,12 @@ function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
 	}
 	$fields = implode(', ', $f);
 	$res = sql_query("SELECT id, ".$fields." FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
-    while ($row=sql_fetch_assoc($res)) { $id = $row['id']; unset($row['id']); $tmp[$id] = $row; }
-	  // маппинг
-    if ($function) $tmp = array_map($function, $tmp);
+    while ($row=sql_fetch_assoc($res)) { 
+	  $id = $row['id']; 
+	  unset($row['id']); 
+	  if ($function) $row = array_map($function, $row); 
+	  $tmp[$id] = $row; 
+	}
 	return $tmp;
   }
   return false;  
