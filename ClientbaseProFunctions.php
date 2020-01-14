@@ -478,6 +478,8 @@ function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
   if (!$tableId || !$fields) {
 	$res = sql_query("SELECT id, fio FROM ".USERS_TABLE." WHERE ".$cond);
     while ($row=sql_fetch_assoc($res)) $tmp[$row['id']] = $row['fio'];
+	  // маппинг
+    if ($function) $tmp = array_map($function, $tmp);
     return $tmp;
   }
   $tableId = intval($tableId);  
