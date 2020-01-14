@@ -500,6 +500,8 @@ function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
 	$fields = implode(', ', $f);
 	$res = sql_query("SELECT id, ".$fields." FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
     while ($row=sql_fetch_assoc($res)) { $id = $row['id']; unset($row['id']); $tmp[$id] = $row; }
+	  // маппинг
+    if ($function) $tmp = array_map($function, $tmp);
 	return $tmp;
   }
   return false;  
