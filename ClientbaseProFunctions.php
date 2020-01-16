@@ -416,12 +416,7 @@ function AddWorkDays($start='',$pause=0,$holidays=[]) {
   $tmp = function($date) { return date('Y-m-d',strtotime($date)); };
     // массив выходных дней
   if (-1!=$holidays) {
-    if (!$holidays || !is_array($holidays)) {
-      if (intval(HOLIDAYS_TABLE) && intval(HOLIDAYS_FIELD_DATE)) {
-        $res = data_select_field(HOLIDAYS_TABLE, 'DATE_FORMAT(f'.HOLIDAYS_FIELD_DATE.',"%Y-%m-%d") AS date', "status=0");
-        while ($row=sql_fetch_assoc($res)) $holidays[] = $row['date'];
-      }
-    }
+    if (!$holidays || !is_array($holidays)) { if (intval(HOLIDAYS_TABLE) && intval(HOLIDAYS_FIELD_DATE)) $holidays = GetArrayFromTable(HOLIDAYS_TABLE,HOLIDAYS_FIELD_DATE, 0, $tmp); }
     else $holidays = array_map($tmp,$holidays);   
   }
     // расчёт итоговой даты
@@ -450,7 +445,7 @@ function GetWorkDaysDiff($start='',$end='',$holidays=[]) {
   $tmp = function($date) { return date('Y-m-d',strtotime($date)); };
     // массив выходных дней
   if (-1!=$holidays) {
-    if (!$holidays || !is_array($holidays)) { if (intval(HOLIDAYS_TABLE) && intval(HOLIDAYS_FIELD_DATE)) $holidays[] = GetArrayFromTable(HOLIDAYS_TABLE,HOLIDAYS_FIELD_DATE); }
+    if (!$holidays || !is_array($holidays)) { if (intval(HOLIDAYS_TABLE) && intval(HOLIDAYS_FIELD_DATE)) $holidays = GetArrayFromTable(HOLIDAYS_TABLE,HOLIDAYS_FIELD_DATE, 0, $tmp); }
     else $holidays = array_map($tmp,$holidays);   
   }
     // расчёт разницы
