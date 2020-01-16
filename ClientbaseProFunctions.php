@@ -408,7 +408,7 @@ function CopyFiles($source, $destination) {
   // функция прибавляет $pause рабочих дней к дате $start с учётом массива выходных дней $holidays ('Y-m-d')
   // $pause может быть положительным и отрицательным
   // $holidays может быть равно -1, в этом случае не он не учитывается
-function AddWorkDays($start='',$pause=0,$holidays='') {
+function AddWorkDays($start='',$pause=0,$holidays=[]) {
     // проверка входных данных
   $start = ($start && NULL_DATETIME<$start && NULL_DATE<=$start) ? date('Y-m-d',strtotime($start)) : date('Y-m-d');
   if (!($pause=intval($pause))) return $start;
@@ -441,7 +441,7 @@ function AddWorkDays($start='',$pause=0,$holidays='') {
 
   // функция вычисляет кол-во рабочих дней между $start и $end с учётом массива выходных дней $holidays ('Y-m-d')
   // $holidays может быть равно -1, в этом случае не он не учитывается
-function GetWorkDaysDiff($start='',$end='',$holidays='') {
+function GetWorkDaysDiff($start='',$end='',$holidays=[]) {
     // проверка входных данных
   $start = ($start && NULL_DATETIME<$start && NULL_DATE<$start) ? date('Y-m-d',strtotime($start)) : date('Y-m-d');
   $end = ($end && NULL_DATETIME<$end && NULL_DATE<$end) ? date('Y-m-d',strtotime($end)) : date('Y-m-d');
