@@ -347,7 +347,7 @@ function SetCheckList($tableId, $fieldId, $lineId, $arrayToAdd=[], $arrayToDelet
   $data = [];
   foreach ($all as $current) if ((in_array($current,$checked) && !in_array($current,$arrayToDelete)) || in_array($current,$arrayToAdd)) $data[] = $current;
     // обновляем запись $lineId
-  data_update($tableId, EVENTS_ENABLE, [implode("\r\n",$data)], "id='".$lineId."' LIMIT 1");
+  data_update($tableId, EVENTS_ENABLE, ['f'.$fieldId=>implode("\r\n",$data)], "id='".$lineId."' LIMIT 1");
   return true;
 }
 
