@@ -326,12 +326,14 @@ function Sync1CTask(int $someTableId, $someData, $prefix="cb_", $updateLimit=99,
 }
 
 
-    // функция добавляет $arrayToAdd и убирает $arrayToDelete значения в поле $fieldId в таблице $tableId в запись $lineId
+    // функция добавляет $arrayToAdd и убирает $arrayToDelete значения в поле $fieldId в таблице $tableId в записи по условиям $cond (если $cond число, то считается id=$cond)
 	// $arrayToAdd может быть строкой или массивом
 	// $arrayToDelete может быть строкой или массивом или строкой 'delete', в этом случае будет удалён массив $arrayToAdd (пережиток предыдущей версии функции)
-function SetCheckList($tableId, $fieldId, $lineId, $arrayToAdd=[], $arrayToDelete=[]) {
+function SetCheckList($tableId, $fieldId, $cond, $arrayToAdd=[], $arrayToDelete=[]) {
     // проверка входных данных
-  if (!$fieldId || !$lineId || !$tableId || (!$arrayToAdd && !$arrayToDelete)) return false;
+  if (!$fieldId || !$cond || !$tableId || (!$arrayToAdd && !$arrayToDelete)) return false;
+    // если $cond 1 число, то приводим к условию id=$cond
+  if (is_numeric($cond)) $cond = "id='".$cond."' LIMIT 1";
     // если $arrayToAdd строка, переводим в массив
   if (!is_array($arrayToAdd)) $arrayToAdd = [$arrayToAdd];
     // если $arrayToDelete строка, переводим в массив
@@ -339,15 +341,18 @@ function SetCheckList($tableId, $fieldId, $lineId, $arrayToAdd=[], $arrayToDelet
   elseif ('delete'==$arrayToDelete) { $arrayToDelete = $arrayToAdd; $arrayToAdd = []; }
     // получаем список всех галочек из настроек поля
   $row = sql_fetch_assoc(sql_select_field(FIELDS_TABLE, "type_value", "id='".$fieldId."' LIMIT 1", $tableId));
-  $all = explode("\r\n", $row['type_value']);  
-    // получаем список отмеченных галочек из записи $lineId
-  $row = sql_fetch_assoc(data_select_field($tableId, 'f'.$fieldId.' AS field', "id='".$lineId."' LIMIT 1"));
-  $checked = explode("\r\n", $row['field']);
-    // проходим по списку всех галочек и добавляем/убираем значение в итоговый массив $data
-  $data = [];
-  foreach ($all as $current) if ((in_array($current,$checked) && !in_array($current,$arrayToDelete)) || in_array($current,$arrayToAdd)) $data[] = $current;
-    // обновляем запись $lineId
-  data_update($tableId, EVENTS_ENABLE, ['f'.$fieldId=>implode("\r\n",$data)], "id='".$lineId."' LIMIT 1");
+  $all = explode("\r\n", $row['type_value']);
+    // проходим по всем записям по условию $cond
+  $res = sql_query("SELECT id, f".$fieldId." AS field FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
+  while ($row=sql_fetch_assoc($res)) {
+	  // список отмеченных галочек в текущей строке
+	$checked = explode("\r\n", $row['field']);
+	  // проходим по списку всех галочек и добавляем/убираем значение в итоговый массив $data
+    $data = [];
+    foreach ($all as $current) if ((in_array($current,$checked) && !in_array($current,$arrayToDelete)) || in_array($current,$arrayToAdd)) $data[] = $current;
+	  // обновляем текущую строку
+	data_update($tableId, EVENTS_ENABLE, ['f'.$fieldId=>implode("\r\n",$data)], "id='".$row['id']."' LIMIT 1");  
+  }
   return true;
 }
 
