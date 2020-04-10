@@ -8,8 +8,8 @@ define('NULL_DATE', '0000-00-00');
 
 
     // преобразует кол-во секунд $sec в формат чч:мм:сс      
-function TimeFormat(int $sec) {
-    if (!is_numeric($sec)) return "00:00:00";
+function TimeFormat($sec=0) {
+    if (!$sec || !is_numeric($sec)) return "00:00:00";
     else {
         $hour = intval(floor($sec/3600));
         if ($hour<10) $hour = "0".$hour;
