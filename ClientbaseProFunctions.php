@@ -331,7 +331,16 @@ function Sync1CTask(int $someTableId, $someData, $prefix="cb_", $updateLimit=99,
 	// $arrayToDelete может быть строкой или массивом или строкой 'delete', в этом случае будет удалён массив $arrayToAdd (пережиток предыдущей версии функции)
 function SetCheckList($tableId, $fieldId, $cond, $arrayToAdd=[], $arrayToDelete=[]) {
     // проверка входных данных
-  if (!$fieldId || !$cond || !$tableId || (!$arrayToAdd && !$arrayToDelete)) return false;
+  if (!$fieldId || !$cond || (!$arrayToAdd && !$arrayToDelete)) return false;
+    // приводим $fieldId к числовому виду
+  $fieldId = preg_replace('/\D/i', '', $fieldId);
+  if (!$fieldId) return false;
+    // ищем таблицу 
+  if (!$tableId) {
+    $e = sql_fetch_assoc(sql_query("SELECT table_id AS t FROM ".FIELDS_TABLE." WHERE id='".$fieldId."' LIMIT 1"));
+    if ($e['t']) $tableId = $e['t'];
+    else return false;
+  }  
     // если $cond 1 число, то приводим к условию id=$cond
   if (is_numeric($cond)) $cond = "id='".$cond."' LIMIT 1";
     // если $arrayToAdd строка, переводим в массив
@@ -340,8 +349,8 @@ function SetCheckList($tableId, $fieldId, $cond, $arrayToAdd=[], $arrayToDelete=
   if (!is_array($arrayToDelete) && 'delete'!=$arrayToDelete) $arrayToDelete = [$arrayToDelete];
   elseif ('delete'==$arrayToDelete) { $arrayToDelete = $arrayToAdd; $arrayToAdd = []; }
     // получаем список всех галочек из настроек поля
-  $row = sql_fetch_assoc(sql_select_field(FIELDS_TABLE, "type_value", "id='".$fieldId."' LIMIT 1", $tableId));
-  $all = explode("\r\n", $row['type_value']);
+  $e = sql_fetch_assoc(sql_select_field(FIELDS_TABLE, "type_value", "id='".$fieldId."' LIMIT 1", $tableId));
+  $all = explode("\r\n", $e['type_value']);
     // проходим по всем записям по условию $cond
   $res = sql_query("SELECT id, f".$fieldId." AS field FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
   while ($row=sql_fetch_assoc($res)) {
