@@ -483,14 +483,20 @@ function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
   // установка условия
   $cond = ($cond) ? $cond : 1;  
   // проверка входных данных
-  if (!$tableId || !$fields) {
+  if (!$tableId && !$fields) {
 	$res = sql_query("SELECT id, fio FROM ".USERS_TABLE." WHERE ".$cond);
     while ($row=sql_fetch_assoc($res)) $tmp[$row['id']] = $row['fio'];
 	  // маппинг
     if ($function) $tmp = array_map($function, $tmp);
     return $tmp;
   }
-  $tableId = intval($tableId);  
+  $tableId = intval($tableId);
+    // ищем таблицу 
+  if (!$tableId && (is_numeric($fields) || is_numeric(substr($fields,1)))) {
+    $e = sql_fetch_assoc(sql_query("SELECT table_id AS t FROM ".FIELDS_TABLE." WHERE id='".preg_replace('/\D/i','',$fieldId)."' LIMIT 1"));
+    if ($e['t']) $tableId = $e['t'];
+    else return false;
+  }
     // результирующий массив
   $tmp = [];  
     // если $fields - число, формируем массив id=>поле
