@@ -491,9 +491,14 @@ function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
     return $tmp;
   }
   $tableId = intval($tableId);
-    // ищем таблицу 
-  if (!$tableId && (is_numeric($fields) || is_numeric(substr($fields,1)))) {
-    $e = sql_fetch_assoc(sql_query("SELECT table_id AS t FROM ".FIELDS_TABLE." WHERE id='".preg_replace('/\D/i','',$fieldId)."' LIMIT 1"));
+    // форматируем $fields, когда это не число и не массив (например, строка 'f12345')
+  if (!is_numeric($fields) && !is_array($fields)) {
+    $fields_ = substr($fields,1);
+    if (is_numeric($fields_)) $fields = $fields_;
+  }
+    // ищем таблицу
+  if (!$tableId && is_numeric($fields)) {
+    $e = sql_fetch_assoc(sql_query("SELECT table_id AS t FROM ".FIELDS_TABLE." WHERE id='".$fields."' LIMIT 1"));
     if ($e['t']) $tableId = $e['t'];
     else return false;
   }
