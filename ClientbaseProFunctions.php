@@ -437,7 +437,7 @@ function AddWorkDays($start='',$pause=0,$holidays=[]) {
   $index = (0>$pause) ? -1 : 1;
   $pause = abs($pause);
   $str = strtotime($start);
-  for ($i=1; $i<1000; $i++) {
+  for ($i=1; $i<100000; $i++) {
     $y = date('Y-m-d', $s=$str+$i*$index*86400);
     $w = date('w', $s);
     if (($w>0 && $w<6) && !in_array($y,$holidays)) $j++;
