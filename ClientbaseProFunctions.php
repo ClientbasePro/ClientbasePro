@@ -7,7 +7,7 @@ define('NULL_DATETIME', '0000-00-00 00:00:00');
 define('NULL_DATE', '0000-00-00');  
 
 
-    // преобразует кол-во секунд $sec в формат чч:мм:сс      
+    // преобразует кол-во секунд $sec в формат чч:мм:сс
 function TimeFormat($sec=0) {
     if (!$sec || !is_numeric($sec)) return "00:00:00";
     else {
@@ -49,30 +49,63 @@ function GetCurrency($date, $currency='EUR') {
     // $number - номер телефона в любом формате
     // $code - код города по умолчанию, по умолчанию 495 Москва
     // $plus - отображать ли "+" перед выводимым номером
-function SetNumber($number, $code='', $plus='+') {
-    $plus = (!$plus || '+'==$plus) ? $plus : '+';
-    if (!$code && defined(DEFAULT_PHONE_CODE)) $code = DEFAULT_PHONE_CODE;
-        // оставляем только цифры в $number
-    $str = strval($number);
-    $str = preg_replace('/\D/i','',$str);
-    $strlen = strlen($str);
-        // сначала иностранные, начинающиеся на 810
-    if ('810'==$str[0].$str[1].$str[2]) return $str;
-        // номера РБ
-    if (0===strpos($str,'375') && 12==$strlen) return $plus.$str;
-	  // Молдова
-	if (0===strpos($str,'373') && in_array($strlen,array(11,12))) return $plus.$str;
-        // далее короткие внутренние 3-хзначные
-    if (3==$strlen && 1000>$str) return $str;
-        // далее российские 11-значные номера, начинающиеся на 7 или 8
-    if (11==$strlen && ('7'==$str[0] || '8'==$str[0])) { $str = substr($str,1); return $plus.'7'.$str; }
-	if (12==$strlen && '779'==$str[0].$str[1].$str[2]) { $str = substr($str,2); return $plus.'7'.$str; }
-        // далее 10-значные, к ним дописываем 7
-    if (10==$strlen) return $plus.'7'.$str;
-        // суммируем длину кода и длину номера
-    $code = preg_replace('/\D/i', '', strval($code));
-    if ($code && 10==($strlen+strlen($code))) return $plus.'7'.$code.$str;
-    return '';
+	// $format - формат вывода. Допустимы лат.буквы, цифры и звёздочки. Если длина формата меньше длины номера, то замена последних цифр будет по последнему символу формата
+	// формат накладывается на номер как маска: звёздочка заменяет очередную цифру номера на звёздочку, буква/цифра не меняет
+	// примеры для номера +74951234567: '+7ABC***00**'=>+7495***45**, '8495*'=>+7495*******, '8495N'=>+74951234567, '849*XXX*'=>+749*123****, '8499NNN*'=>+7495123****	
+function SetNumber($number, $code='', $plus='+', $format=false) {
+    // начальная проверка и корректировка входных данных
+  if (!$plus && false!==$plus) $plus = '+';
+  if (false!==$format) $format_ = true;
+  if (!$code && defined('DEFAULT_PHONE_CODE')) $code = DEFAULT_PHONE_CODE;
+  $result = '';
+    // оставляем только цифры в $number
+  $str = $str_ = strval($number);
+  $str = preg_replace('/\D/i','',$str);
+  $strlen = strlen($str);
+  $strlen_ = strlen($str_);
+    // сначала иностранные, начинающиеся на 810
+  if (!$result && '810'==$str[0].$str[1].$str[2]) $result = $str;
+    // номера РБ
+  if (!$result && 0===strpos($str,'375') && 12==$strlen) $result = $plus.$str;
+    // Молдова
+  if (!$result && 0===strpos($str,'373') && in_array($strlen,array(11,12))) $result = $plus.$str;
+    // далее короткие внутренние 3-хзначные
+  if (!$result && 3==$strlen && 1000>$str) $result = $str;
+    // далее российские 11-значные номера, начинающиеся на 7 или 8
+  if (!$result && 11==$strlen && ('7'==$str[0] || '8'==$str[0])) { $str = substr($str,1); $result = $plus.'7'.$str; }
+  if (!$result && 12==$strlen && '779'==$str[0].$str[1].$str[2]) { $str = substr($str,2); $result = $plus.'7'.$str; }
+    // далее 10-значные, к ним дописываем 7
+  if (!$result && 10==$strlen) $result = $plus.'7'.$str;
+    // суммируем длину кода и длину номера
+  $code = preg_replace('/\D/i', '', strval($code));
+  if (!$result && $code && 10==($strlen+strlen($code))) $result = $plus.'7'.$code.$str;
+    // если не нужно форматировать, сразу выводим  
+  if (!$format_) return $result;
+    // форматируем
+    // 24.7.20 - выделяем текстовую часть после номера
+  $i = -1;
+  $tmp = $note = '';
+  $result_ = preg_replace('/\D/i','',$result);
+  while ((++$i)<=$strlen_) {
+    $tmp .= preg_replace('/\D/i','',$str_[$i]);
+    if ($tmp==$result_) { $note = trim(substr($str_,$i+1)); break; }
+  }
+    // оставляем в формате только цифры, латиницу и *
+  $format = preg_replace('/[^a-zA-Z0-9\*]/', '', $format);
+  if (!$format || false===strpos($format,'*')) return $result.(($note)?' '.$note:'');  
+  $format = strval($format);
+    // заменяем в номере цифры на звёздочки
+  $i = -1;
+  $tmp = '';
+  $strlen_ = strlen($result_);
+  while ((++$i)<$strlen_) {
+    if (!isset($last)) $last = $format[$i];
+    if (!$format[$i]) $format[$i] = $last;
+    $tmp .= ('*'!=$format[$i]) ? $result_[$i] : '*';
+    $last = $format[$i];
+  }
+  if ($tmp) return $plus.$tmp.(($note)?' '.$note:'');
+  return false;
 }
 
 
@@ -82,8 +115,8 @@ function GetAccount($number='',$email='',$someId=0) {
 	if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
 	elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
 		// формируем массив адресов E-mail из $email
-	if (is_array($email)) { foreach ($email as $mail) if ($mail && filter_var($mail,FILTER_VALIDATE_EMAIL)) $emails[$mail] = $mail; }
-	elseif ($email) foreach (explode(',',$email) as $m1) foreach (explode(';',$m1) as $m2) if ($m2 && filter_var($m2,FILTER_VALIDATE_EMAIL)) $emails[$m2] = $m2;
+	if (is_array($email)) { foreach ($email as $mail) if (($mail=trim($mail)) && filter_var($mail,FILTER_VALIDATE_EMAIL)) $emails[$mail] = $mail; }
+	elseif ($email) foreach (explode(',',$email) as $m1) foreach (explode(';',$m1) as $m2) if (($m2=trim($m2)) && filter_var($m2,FILTER_VALIDATE_EMAIL)) $emails[$m2] = $m2;
 		// если нет ни одного отформатированного контакта, завершаем
     if (!$numbers && !$emails) return false;
         // проверка id таблиц и полей
