@@ -226,12 +226,12 @@ function GetContact($number='',$email='',$someId=0,$settings=[]) {
 	}
 			// доп.проверка для полей контактов
     if (!$tableId && defined('CONTACT_TABLE')) $tableId = intval(CONTACT_TABLE);
-    if (!$fieldPhone && defined('CONTACT_FIELD_PHONE')) $contactFieldPhone = intval(CONTACT_FIELD_PHONE);
-    if (!$fieldEmail && defined('CONTACT_FIELD_EMAIL')) $contactFieldEmail = intval(CONTACT_FIELD_EMAIL);
+    if (!$fieldPhone && defined('CONTACT_FIELD_PHONE')) $fieldPhone = intval(CONTACT_FIELD_PHONE);
+    if (!$fieldEmail && defined('CONTACT_FIELD_EMAIL')) $fieldEmail = intval(CONTACT_FIELD_EMAIL);
     if (!$fieldDouble && defined('CONTACT_FIELD_DOUBLE')) $fieldDouble = intval(CONTACT_FIELD_DOUBLE);	
 		// проверка по стандартным полям КБ
 	if (!$tableId) {
-		$contactTableId = 51;
+		$tableId = 51;
 		$fieldPhone = 548;
 		$fieldEmail = 549;
 	}
@@ -248,7 +248,7 @@ function GetContact($number='',$email='',$someId=0,$settings=[]) {
 		$e = sql_fetch_assoc(sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id='".$fieldDouble."' AND table_id='".$tableId."' LIMIT 2"));
 		if ($e['id']) $doubleCond = " AND f".$fieldDouble."='' ";
     }
-	if ($someId) $idCond = " AND id!='".$ID."' ";
+	if ($someId) $idCond = " AND id<>'".$someId."' ";
         // 1 попытка - прямое совпадение или LIKE
     $e = sql_fetch_assoc(data_select_field($tableId, 'id', "status=0 AND ({$mainCond}) {$idCond} {$doubleCond} ORDER BY add_time DESC LIMIT 1"));
     if ($e['id']) return $e['id'];
