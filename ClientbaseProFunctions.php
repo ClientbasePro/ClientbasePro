@@ -160,7 +160,14 @@ function GetAccount($number='',$email='',$someId=0,$settings=[]) {
     $mainCond = $idCond = '';
 	if ($accountFieldPhone) foreach ($numbers as $num) $mainCond .= ((!$mainCond)?"":" OR ")."f".$accountFieldPhone."='".$num."' ".((1000<$num)?" OR f".$accountFieldPhone." LIKE '%".$num."%' ":"");
 	if ($accountFieldEmail) foreach ($emails as $mail) $mainCond .= ((!$mainCond)?"":" OR ")."f".$accountFieldEmail."='".$mail."' OR f".$accountFieldEmail." LIKE '%".$mail."%' ";
-    if ($someId) $idCond = " AND id<>'".$someId."' ";
+    if ($someId) {
+        if (is_array($someId)) { 
+			$someIds = [];
+			foreach ($someId as $id_) if ($id_=intval($id_)) $someIds[$id_] = $id_;
+			if ($someIds) $idCond = " AND id NOT IN (".implode(',',$someIds).") ";
+		}
+	    else $idCond = " AND id<>'".$someId."' ";
+    }
     if ($accountFieldDouble) $doubleCond = " AND f".$accountFieldDouble."='' ";
         // 1 попытка - прямое совпадение или LIKE
     $e = sql_fetch_assoc(data_select_field($accountTableId, 'id', "status=0 AND ({$mainCond}) {$idCond} {$doubleCond} ORDER BY add_time DESC LIMIT 1"));
@@ -248,7 +255,14 @@ function GetContact($number='',$email='',$someId=0,$settings=[]) {
 		$e = sql_fetch_assoc(sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id='".$fieldDouble."' AND table_id='".$tableId."' LIMIT 2"));
 		if ($e['id']) $doubleCond = " AND f".$fieldDouble."='' ";
     }
-	if ($someId) $idCond = " AND id<>'".$someId."' ";
+	if ($someId) {
+        if (is_array($someId)) { 
+			$someIds = [];
+			foreach ($someId as $id_) if ($id_=intval($id_)) $someIds[$id_] = $id_;
+			if ($someIds) $idCond = " AND id NOT IN (".implode(',',$someIds).") ";
+		}
+	    else $idCond = " AND id<>'".$someId."' ";
+    }
         // 1 попытка - прямое совпадение или LIKE
     $e = sql_fetch_assoc(data_select_field($tableId, 'id', "status=0 AND ({$mainCond}) {$idCond} {$doubleCond} ORDER BY add_time DESC LIMIT 1"));
     if ($e['id']) return $e['id'];
