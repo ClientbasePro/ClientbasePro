@@ -74,8 +74,15 @@ function SetNumber($number, $code='', $plus='+', $format=false) {
   if (!$result && '810'==$str[0].$str[1].$str[2]) $result = $str;
     // номера РБ
   if (!$result && 0===strpos($str,'375') && 12==$strlen) $result = $plus.$str;
+  if (!$result && defined('DEFAULT_COUNTRY_CODE') && 375==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
+    // Украина
+  if (!$result && 0===strpos($str,'380') && 12==$strlen) $result = $plus.$str;
+  if (!$result && defined('DEFAULT_COUNTRY_CODE') && 380==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
     // Молдова
   if (!$result && 0===strpos($str,'373') && in_array($strlen,array(11,12))) $result = $plus.$str;
+    // Таджикистан
+  if (!$result && 0===strpos($str,'992') && 12==$strlen) $result = $plus.$str;
+  if (!$result && defined('DEFAULT_COUNTRY_CODE') && 992==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
     // далее короткие внутренние 3-хзначные
   if (!$result && 3==$strlen && 1000>$str) $result = $str;
     // далее российские 11-значные номера, начинающиеся на 7 или 8
