@@ -204,7 +204,13 @@ function GetAccount($number='',$email='',$someId=0,$settings=[]) {
 	if ($contactTableId && $contactFieldAccountId) {
 		$e = sql_fetch_assoc(sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id='".$contactFieldAccountId."' AND table_id='".$contactTableId."' LIMIT 1"));
 		if (!$e['id']) return false;	
-		if ($contact=intval(GetContact($number,$email,0,$settings))) {
+		$cids = [];
+		if ($idCond) {
+		  $idCond_ = str_replace(["NOT IN","<>"], ["IN","="], $idCond);
+		  $cids = GetArrayFromTable($contactTableId, $contactFieldAccountId, "f".$contactFieldAccountId." IN (SELECT id FROM ".DATA_TABLE.$accountTableId." WHERE 1 {$idCond_})");
+		}
+		if ($cids) $cids = array_keys($cids);
+		if ($contact=intval(GetContact($number,$email,$cids,$settings))) {
 			if ($contactFieldDouble) {
 				$e = sql_fetch_assoc(sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id='".$contactFieldDouble."' AND table_id='".$contactTableId."' LIMIT 1"));
 				if ($e['id']) $cc = " AND f".$contactFieldDouble."='' ";
