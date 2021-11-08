@@ -640,3 +640,157 @@ function IsNullDate($date='') {
   $date = date('Y-m-d H:i:s', strtotime($date));
   return (!$date || NULL_DATETIME==$date) ? true : false;
 }
+
+
+  // 1 - 'integer',
+  // 2 - 'date',
+  // 3 - 'string',
+  // 4 - 'list',
+  // 5 - 'link'
+  // 6 - 'file'
+  // 7 - 'user'
+  // 8 - 'group'
+  // 9 - 'image'
+  // 10 - 'id'
+  // 11 - 'user_id'
+  // 12 - 'add_time'
+  // 13 - 'status'
+    
+  // служебная функция, выводит массив полей в таблице $tableId, в т.ч. полей из полей связи - для создания списка полей для подстановки в шаблонах
+  // формат вывода $format ('names' | 'ids' | 'both'), 'names' по умолчанию
+    // 'names' - пример {$Заявка}
+    // 'ids' - пример {$f123456}
+    // 'both' - будут выведены оба варианта
+  // для пакетной обработки может передаваться массив $fields[table_id][name_field] = ['id'=>'f***', 'type'=>type_field, 'values'=>type_value], образец создания см.внутри функции
+function GetTableFields($tableId=0, $format='names', $fields=[]) {
+    // проверка входных данных
+  if (!$tableId) return false;
+  if ($format && !in_array($format,['names','ids','both'])) $format = 'names';
+  if (!$fields || !is_array($fields)) {
+    $fields = [];
+    $res = sql_query("SELECT id, table_id, name_field, type_field, type_value FROM ".FIELDS_TABLE." ORDER BY field_num");
+    while ($row=sql_fetch_assoc($res)) {
+      if ('ids'!==$format) $fields[$row['table_id']][$row['name_field']] = ['id'=>'f'.$row['id'], 'type'=>$row['type_field'], 'values'=>$row['type_value']];
+      if ('names'!=$format && !$fields[$row['table_id']]['f'.$row['id']]) $fields[$row['table_id']]['f'.$row['id']] = ['name'=>$row['name_field'], 'type'=>$row['type_field'], 'values'=>$row['type_value']];
+    }
+  }
+    // составляем массив полей 
+  $data = [];
+  foreach ($fields[$tableId] as $key=>$field) {
+    $e = '{$'.$key.'}';
+    if (5==$field['type']) {
+      $f = explode("|",$field['values']);
+      $table = $f[0];
+      $show = $f[1];
+      if ($table && $show) $data[$e] = $e;
+      foreach ($fields[$table] as $key_=>$field_) {
+        $e_ = '{$'.$key.'.'.$key_.'}';
+        $data[$e_] = $e_;
+      }
+    }
+    else $data[$e] = $e;
+  }
+  return ($data) ? array_values($data) : false;
+}
+
+
+
+  // функция возвращает форматированное значение $value из поля $field (массив ['id','name','type','values'])
+  // для пакетной обработки могут передаваться $users (массив пользователей) и $groups (массив групп доступа) (в обоих массивах ['id'=>name])
+function GetFormattedFieldData($value='', $field=[], $users=[], $groups=[]) {
+  if ((!$value && 13!=$field['type']) || !$field || !is_array($field)) return $value;
+  if (!$users || !is_array($users)) $users = GetArrayFromTable();
+  if (!$groups || !is_array($groups)) {
+    $groups = [];
+    $res = sql_query("SELECT id, name FROM ".GROUPS_TABLE);
+    while ($row=sql_fetch_assoc($res)) $groups[$row['id']] = $row['name'];
+  }  
+  if (1==$field['type']) {
+    $format = '0/10';
+    if ($tmp=explode("/",explode("|",$field['values'])[0])) $format = intval($tmp[1]).'/'.min(10,intval($tmp[0]));
+    $value = form_local_number($value,$format);
+  }
+  elseif (2==$field['type'] || 12==$field['type']) {
+    $format = (1==$field['values']) ? 'd.m.Y H:i' : 'd.m.Y';
+    $value = (!IsNullDate($value)) ? date($format,strtotime($value)) : '';
+  }
+  elseif (7==$field['type'] || 11==$field['type']) {
+    $value_ = [];
+    foreach (explode('-',$value) as $id) if ($id) $value_[] = $users[$id];
+    $value = implode(', ', $value_);
+  }
+  elseif (8==$field['type']) {
+    $value_ = [];
+    foreach (explode('-',$value) as $id) if ($id) $value_[] = $groups[$id];
+    $value = implode(', ', $value_);
+  }
+  elseif (4==$field['type'] || 6==$field['type'] || 9==$field['type']) $value = str_replace("\r\n", ", ", $value);
+  elseif (13==$field['type']) {
+    $e = ['активные','архивные','удаленные','временные'];
+    $value = $e[$value];
+  }
+  return $value;
+}
+
+
+  // функция формирует массив ['field'=>'value'] полей строки $lineId в таблице $tableId
+  // для пакетной обработки может передаваться массив $fields[table_id][name_field] = ['id'=>'f***', 'type'=>type_field, 'values'=>type_value], образец создания см.внутри функции, $users, $groups
+function GetTableDataToReplace($tableId=0, $lineId=0, $fields=[], $users=[], $groups=[]) {
+  if (!$tableId || !$lineId) return false;
+  $tableId = intval($tableId);
+  $lineId = intval($lineId);
+  if (!$tableId || !$lineId) return false;
+  if (!$fields || !is_array($fields)) {
+    $fields = [];
+    $res = sql_query("SELECT id, table_id, name_field, type_field, type_value FROM ".FIELDS_TABLE."");
+    while ($row=sql_fetch_assoc($res)) {
+      $fields[$row['table_id']][$row['name_field']] = ['id'=>'f'.$row['id'], 'type'=>$row['type_field'], 'values'=>$row['type_value']];
+      if (!$fields[$row['table_id']]['f'.$row['id']]) $fields[$row['table_id']]['f'.$row['id']] = ['name'=>$row['name_field'], 'type'=>$row['type_field'], 'values'=>$row['type_value']];
+    }
+  }
+  if (!$users || !is_array($users)) $users = GetArrayFromTable();
+  if (!$groups || !is_array($groups)) {
+    $groups = [];
+    $res = sql_query("SELECT id, name FROM ".GROUPS_TABLE);
+    while ($row=sql_fetch_assoc($res)) $groups[$row['id']] = $row['name'];
+  }
+  $data = [];
+  $current = sql_fetch_assoc(data_select($tableId, "id=$lineId LIMIT 1"));
+  $systemFields = [10=>'id', 'user_id', 'add_time', 'status'];
+  foreach ($fields[$tableId] as $key=>$field) if ($field['id']) {
+    if ($id_=$systemFields[$field['type']]) $field['id'] = $id_;
+    $value = $current[$field['id']];
+    if (is_array($value) || 5==$field['type']) {
+      $f = explode("|",$field['values']);
+      $table = $f[0];
+      $show = $f[1];
+      $id = (is_array($value)) ? $value['raw'] : $value;
+      if ($table && $id) {
+        $line_ = sql_fetch_assoc(data_select($table, "id=$id LIMIT 1"));
+        foreach ($line_ as $name2=>$value2) if ($fields[$table][$name2]['name']) {
+          $data[$key.'.'.$fields[$table][$name2]['name']] = GetFormattedFieldData($value2,$fields[$table][$name2],$users,$groups);
+          if ('f'.$show==$name2) $data[$key] = GetFormattedFieldData($value2,$fields[$table][$name2],$users,$groups);
+        }
+      }
+    }
+    else {
+      $value = GetFormattedFieldData($value,$field,$users,$groups);
+      $data[$key] = $value;
+    }
+  }  
+  return ($data) ? $data : false;
+}
+
+
+  // функция выполняет в тексте $textToReplace замену по массиву $data (результат функции GetTableDataToReplace)
+function ReplaceInTemplate($textToReplace='', $data=[]) {
+  if (!$textToReplace) return false;
+  if (false===strpos($textToReplace,'{$') || !$data) return $textToReplace;
+  $pattern = '/\{\$(.+?)\}/u';
+  preg_match_all($pattern, $textToReplace, $tmp);
+  if ($tmp) { 
+    foreach ($tmp[1] as $field) if (isset($data[$field])) $textToReplace = str_replace('{$'.$field.'}', $data[$field], $textToReplace); 
+    return $textToReplace;
+  }
+  return false;
+}
