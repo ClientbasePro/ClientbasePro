@@ -676,19 +676,32 @@ function GetTableFields($tableId=0, $format='names', $fields=[]) {
   }
     // составляем массив полей 
   $data = [];
-  foreach ($fields[$tableId] as $key=>$field) {
-    $e = '{$'.$key.'}';
-    if (5==$field['type']) {
-      $f = explode("|",$field['values']);
-      $table = $f[0];
-      $show = $f[1];
-      if ($table && $show) $data[$e] = $e;
-      foreach ($fields[$table] as $key_=>$field_) {
-        $e_ = '{$'.$key.'.'.$key_.'}';
-        $data[$e_] = $e_;
+  $t = get_table($tableId);
+  if (!$t['id']) return false;
+  $f = get_table_fields($t);
+  foreach ($fields[$tableId] as $key=>$field) { 
+    $id = ($field['id']) ? intval(substr($field['id'],1)) : intval(substr($key,1));
+    if ($f[$id]['read']) {
+      $e = '{$'.$key.'}';
+      if (5==$field['type']) {
+        $fld = explode("|",$field['values']);
+        $table = $fld[0];
+        $show = $fld[1];
+        $t_ = get_table($table);
+        if ($t_['id']) {
+          $f_ = get_table_fields($t_);
+          if ($table && $show) $data[$e] = $e;
+          foreach ($fields[$table] as $key_=>$field_) {
+            $id_ = ($field_['id']) ? intval(substr($field_['id'],1)) : intval(substr($key_,1));
+            if ($f_[$id_]['read']) {
+              $e_ = '{$'.$key.'.'.$key_.'}';
+              $data[$e_] = $e_;
+            }
+          }
+        }
       }
+      else $data[$e] = $e;
     }
-    else $data[$e] = $e;
   }
   return ($data) ? array_values($data) : false;
 }
