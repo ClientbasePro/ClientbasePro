@@ -777,26 +777,29 @@ function GetTableDataToReplace($tableId=0, $lineId=0, $fields=[], $users=[], $gr
       $f = explode("|",$field['values']);
       $table = $f[0];
       $show = $f[1];
-      $id = (is_array($value)) ? $value['raw'] : $value;
-      if ($table && $id) {
-        $line_ = sql_fetch_assoc(data_select($table, "id=$id LIMIT 1"));
-        foreach ($line_ as $name2=>$value2) if ($fields[$table][$name2]['name']) {
-          if (5==$fields[$table][$name2]['type']) {
-            $f2 = explode("|",$fields[$table][$name2]['values']);
-            $table2 = $f2[0];
-            $show2 = $f2[1];
-            if ($table2 && $show2) {
-              if ($id_=$systemFields[$fields[$table2]['f'.$show2]['type']]) $f2_ = $id_;
-              else $f2_ = 'f'.$show2;
-              $line2_ = sql_fetch_assoc(data_select_field($table2, $f2_, "id=$value2 LIMIT 1"));
-              $data[$key.'.'.$fields[$table][$name2]['name']] = GetFormattedFieldData($line2_[$f2_],$fields[$table2]['f'.$show2],$users,$groups);
+      $id = (is_array($value)) ? intval($value['raw']) : intval($value);
+      if ($table) {
+        if ($id) {
+          $line_ = sql_fetch_assoc(data_select($table, "id='".$id."' LIMIT 1"));
+          foreach ($line_ as $name2=>$value2) if ($fields[$table][$name2]['name']) {
+            if (5==$fields[$table][$name2]['type']) {
+              $f2 = explode("|",$fields[$table][$name2]['values']);
+              $table2 = $f2[0];
+              $show2 = $f2[1];
+              if ($table2 && $show2) {
+                if ($id_=$systemFields[$fields[$table2]['f'.$show2]['type']]) $f2_ = $id_;
+                else $f2_ = 'f'.$show2;
+                $line2_ = sql_fetch_assoc(data_select_field($table2, $f2_, "id=$value2 LIMIT 1"));
+                $data[$key.'.'.$fields[$table][$name2]['name']] = GetFormattedFieldData($line2_[$f2_],$fields[$table2]['f'.$show2],$users,$groups);
+              }
+            }
+            else {
+              $data[$key.'.'.$fields[$table][$name2]['name']] = GetFormattedFieldData($value2,$fields[$table][$name2],$users,$groups);
+              if ('f'.$show==$name2) $data[$key] = GetFormattedFieldData($value2,$fields[$table][$name2],$users,$groups);
             }
           }
-          else {
-            $data[$key.'.'.$fields[$table][$name2]['name']] = GetFormattedFieldData($value2,$fields[$table][$name2],$users,$groups);
-            if ('f'.$show==$name2) $data[$key] = GetFormattedFieldData($value2,$fields[$table][$name2],$users,$groups);
-          }
         }
+        else foreach ($fields[$table] as $name2=>$field2) if ($field2['id']) $data[$key.'.'.$name2] = '';
       }
     }
     else {
