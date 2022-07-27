@@ -32,7 +32,7 @@ function TimeFormat($sec=0) {
 
         // функция получает курс валюты $currency с сайта ЦБ РФ на дату $date
         // без параметров получаем курс Евро на сегодня
-function GetCurrency($date, $currency='EUR') {
+function GetCurrency($date='', $currency='EUR') {
         // проверка входных данных
     if (!$date) $date = date("d/m/Y");
     else $date = date("d/m/Y", strtotime($date));
@@ -40,12 +40,13 @@ function GetCurrency($date, $currency='EUR') {
     $url = 'http://www.cbr.ru/scripts/XML_daily.asp?date_req='.$date;
         // запрос к сайту ЦБ РФ
     $curl = curl_init($url);
-    curl_setopt_array($curl, array(CURLOPT_RETURNTRANSFER=>true));
+    curl_setopt_array($curl, [CURLOPT_RETURNTRANSFER=>true]);
     if ($response=curl_exec($curl)) {
         $pattern = '/<Valute ID=\"R.{5}\".+?<CharCode>'.$currency.'<\/CharCode>(.*?)<\/Valute\>/is';
         preg_match($pattern, $response, $m);
         preg_match("/<Value>(.*?)<\/Value>/is", $m[1], $r);
-        return floatval(str_replace(",", ".", $r[1]));
+	preg_match("/<Nominal>(.*?)<\/Nominal>/is", $m[1], $r2);
+        return floatval(str_replace(",", ".", $r[1])/((1<$r2[1])?$r2[1]:1));
     }
     curl_close($curl);
     return false;
