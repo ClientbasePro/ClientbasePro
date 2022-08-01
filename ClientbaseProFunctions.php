@@ -824,3 +824,112 @@ function ReplaceInTemplate($textToReplace='', $data=[]) {
   }
   return false;
 }
+
+
+  // функция возвращает данные из сообщения (массив ['header', 'body'=>['html','plain'], 'charset', 'attachments'])
+  // $mbox - IMAP stream
+  // $mid - message id
+function GetEmailMessage($mbox, $mid) {
+  if (!$mbox || !$mid) return false;
+  $result = [];
+    // получаем и декодируем/преобразуем заголовки сообщения
+  if ($h=imap_header($mbox,$mid)) {
+    $result['header'] = array_filter(json_decode(json_encode($h), true));
+    foreach ($result['header'] as $key=>$value) {
+      if (($key_=mb_strtolower($key)) && $key_!=$key && ($result['header'][$key_]==$value || Header2utf8($result['header'][$key_])==Header2utf8($value))) unset($result['header'][$key]);
+      else $result['header'][$key] = Header2utf8($value);
+    }
+  }
+    // тело сообщения и аттачи
+  $s = imap_fetchstructure($mbox, $mid);
+    // simple
+  if (!($s->parts)) $result['body'] = GetPart($mbox, $mid, $s, 0);
+    // multipart: cycle through each part
+  else {  
+    $html = $plain = $charset = '';
+    $attachments = [];
+    foreach ($s->parts as $index=>$p) {
+      $part = GetPart($mbox, $mid, $p, ($index+1));
+      $html .= $part['html'];
+      $plain .= $part['plain'];
+      if (!$charset && $part['charset']) $charset = $part['charset'];
+      if ($part['attachments']) $attachments = array_merge($attachments, $part['attachments']);
+    }
+    if ($html) {
+      if ($charset && $charset!='utf-8') $html = iconv($charset, 'utf-8', $html);
+      $result['body']['html'] = $html;
+    }
+    if ($plain) {
+      if ($charset && $charset!='utf-8') $plain = iconv($charset, 'utf-8', $plain);
+      $result['body']['plain'] = $plain;
+    }
+    if ($charset) $result['charset'] = $charset;
+    if ($attachments) {
+      foreach ($attachments as $index=>$attach) $attachments[$index]['name'] = Header2utf8($attach['name']);
+      $result['attachments'] = $attachments;
+    }
+  }
+  return $result;
+}
+
+
+  // функция читает часть E-mail сообщения
+  // $mbox - IMAP stream
+  // $mid - id сообщения
+  // $p - часть E-mail сообщения
+  // $partno - '1', '2', '2.1', '2.1.3', etc for multipart, 0 if simple
+function GetPart($mbox, $mid, $p, $partno=0) {
+  $html = $plain = $charset = '';
+  $attachments = $result = [];
+    // DECODE DATA
+  $data = ($partno) ?
+      imap_fetchbody($mbox, $mid, $partno) :  // multipart
+      imap_body($mbox, $mid);  // simple
+  if (4==$p->encoding) $data = quoted_printable_decode($data);
+  else if (1==$p->encoding) $data = imap_8bit($data);
+  elseif (3==$p->encoding) $data = base64_decode($data);
+    // PARAMETERS
+  $params = [];
+  if ($p->parameters) foreach ($p->parameters as $x) $params[strtolower($x->attribute)] = $x->value;
+  if ($p->dparameters) foreach ($p->dparameters as $x) $params[strtolower($x->attribute)] = $x->value;
+    // ATTACHMENT
+  if ($params['filename'] || $params['name']) {
+    $filename = ($params['filename']) ? $params['filename'] : $params['name'];
+    $name = basename($filename);
+    if ($name && $data) $attachments[] = ['name'=>$filename, 'data'=>$data];
+  }
+    // TEXT
+  if (0==$p->type && $data) {
+    if ('plain'==strtolower($p->subtype)) $plain .= trim($data)."\n\n";
+    else $html .= $data . "<br><br>";
+    if (!$charset && $params['charset']) $charset = $params['charset'];
+  }
+    // EMBEDDED MESSAGE
+  elseif (2==$p->type && $data) $plain .= $data."\n\n";
+    // SUBPART RECURSION
+  if ($p->parts) {
+    foreach ($p->parts as $index=>$p2) {
+      $part = GetPart($mbox, $mid, $p2, $partno.'.'.($index+1));  // 1.2, 1.2.1, etc.
+      $html .= $part['html'];
+      $plain .= $part['plain'];
+      if (!$charset && $part['charset']) $charset = $part['charset'];
+      $attachments = array_merge($attachments, $part['attachments']);
+    }
+  }
+  if ($html) $result['html'] = $html;
+  if ($plain) $result['plain'] = $plain;
+  if ($charset) $result['charset'] = $charset;
+  if ($attachments) $result['attachments'] = $attachments;
+  return $result;
+}
+
+  // применяет функцию imap_utf8 к $header
+  // imap_utf8 - https://www.php.net/manual/ru/function.imap-utf8.php, преобразует MIME-кодированный текст в UTF-8
+  // если $header - строка, то вызов Header2utf8 идентичен вызову imap_utf8
+  // если $header - массив, то функция рекурсивно применяется ко всем элементам массива и возвращает преобразованный массив
+function Header2utf8($header) {
+  if (!$header) return false;
+  if (!is_array($header)) return imap_utf8($header);
+  else foreach ($header as $key=>$value) $header[$key] = Header2utf8($value);
+  return $header;
+}
