@@ -929,7 +929,18 @@ function GetPart($mbox, $mid, $p, $partno=0) {
   // если $header - массив, то функция рекурсивно применяется ко всем элементам массива и возвращает преобразованный массив
 function Header2utf8($header) {
   if (!$header) return false;
-  if (!is_array($header)) return imap_utf8($header);
+  if (!is_array($header)) {
+    $text = imap_utf8($header);
+    if (0===strpos($text,'=?UTF-8?B?')) { 
+      $e = imap_mime_header_decode($text); 
+      if ($e) {
+        $text_ = ''; 
+        foreach ($e as $el) if ('UTF-8'==$el->charset) $text_ .= $el->text; 
+        if ($text_) $text = $text_; 
+      }
+    }
+    return $text;
+  }
   else foreach ($header as $key=>$value) $header[$key] = Header2utf8($value);
   return $header;
 }
