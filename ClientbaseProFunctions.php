@@ -931,7 +931,7 @@ function Header2utf8($header) {
   if (!$header) return false;
   if (!is_array($header)) {
     $text = imap_utf8($header);
-    if (0===mb_stripos($text,'=?utf-8?')) { 
+    if (false!==mb_stripos($text,'=?utf-8?')) { 
       $e = imap_mime_header_decode($text); 
       if ($e) {
         $text_ = '';
