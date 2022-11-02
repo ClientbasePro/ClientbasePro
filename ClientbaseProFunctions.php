@@ -931,11 +931,12 @@ function Header2utf8($header) {
   if (!$header) return false;
   if (!is_array($header)) {
     $text = imap_utf8($header);
-    if (0===mb_stripos($text,'=?utf-8?B?')) { 
+    if (0===mb_stripos($text,'=?utf-8?')) { 
       $e = imap_mime_header_decode($text); 
       if ($e) {
-        $text_ = ''; 
-        foreach ($e as $el) if (in_array(strtolower($el->charset),['default','utf-8'])) $text_ .= $el->text; 
+        $text_ = '';
+	$charsets = ['default','utf-8'];
+        foreach ($e as $el) if (in_array(strtolower($el->charset),$charsets)) $text_ .= $el->text; 
         if ($text_) $text = $text_; 
       }
     }
