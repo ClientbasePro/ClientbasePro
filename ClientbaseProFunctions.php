@@ -466,11 +466,12 @@ function DeleteFiles($tableId, $fieldId, $lineId) {
   $lineId = intval($lineId);
   if (!$tableId || !$fieldId || !$lineId) return false;
     // получаем значение поля, проходим по каждому элементу и удаляем соответствующий файл с диска
-  $row = sql_fetch_assoc(data_select_field($tableId, 'f'.$fieldId.' AS files', "id='".$lineId."' LIMIT 1"));
+  $row = sql_fetch_assoc(data_select_field($tableId, 'f'.$fieldId.' AS files', "id=$lineId LIMIT 1"));
+  if (!$row['files']) return true;
   $files = explode("\r\n", $row['files']);
   foreach ($files as $file) @unlink(get_file_path($fieldId, $lineId, $file));
     // очищаем поле с файлами
-  data_update($tableId, array('f'.$fieldId=>''), "id=$lineId LIMIT 1");
+  data_update($tableId, EVENTS_ENABLE, ['f'.$fieldId=>''], "id=$lineId LIMIT 1");
   return true;
 }
 
