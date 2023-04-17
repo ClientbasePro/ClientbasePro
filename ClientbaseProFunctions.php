@@ -178,12 +178,12 @@ function GetAccount($number='',$email='',$someId=0,$settings=[]) {
     }
     if ($accountFieldDouble) $doubleCond = " AND f".$accountFieldDouble."='' ";
         // 1 попытка - прямое совпадение или LIKE
-    $e = sql_fetch_assoc(data_select_field($accountTableId, 'id', "status=0 AND ({$mainCond}) {$idCond} {$doubleCond} ORDER BY add_time DESC LIMIT 1"));
+    $e = sql_fetch_assoc(data_select_field($accountTableId, 'id', "status=0 AND ({$mainCond}) {$idCond} {$doubleCond} ORDER BY id DESC LIMIT 1"));
     if ($e['id']) return $e['id'];
         // 2 попытка - поиск по номеру телефона, кроме совпадения по шаблонам [0-9]{3} и +7[0-9]{10} (чтобы повторно не искать среди одиночных номеров по формату)
     if ($number && $accountFieldPhone) {
         $patternCond = " AND f".$accountFieldPhone." NOT RLIKE '^[0-9]{3}$' AND f".$accountFieldPhone." NOT RLIKE '^[+]7[0-9]{10}$' ";
-		$res = data_select_field($accountTableId, 'id, f'.$accountFieldPhone.' as phone', "status=0 AND f".$accountFieldPhone."<>'' {$doubleCond} {$idCond} {$patternCond} ORDER BY add_time DESC");
+		$res = data_select_field($accountTableId, 'id, f'.$accountFieldPhone.' as phone', "status=0 AND f".$accountFieldPhone."<>'' {$doubleCond} {$idCond} {$patternCond} ORDER BY id DESC");
         while ($row=sql_fetch_assoc($res)) {
             $phones = explode(',', $row['phone']);
             foreach ($phones as $p) if (in_array(SetNumber($p),$numbers)) return $row['id'];
