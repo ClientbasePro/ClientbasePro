@@ -189,7 +189,7 @@ function GetAccount($number='',$email='',$someId=0,$settings=[]) {
             foreach ($phones as $p) if (in_array(SetNumber($p),$numbers)) return $row['id'];
         }
     }
-        // 3 попытка - поиск через контактное лицо    
+        // 3 попытка - поиск через контактное лицо 
 	if ($settings) {
 		$contactTableId = intval($settings['CONTACT_TABLE']);
 		$contactFieldAccountId = intval($settings['CONTACT_FIELD_ACCOUNTID']);
@@ -629,10 +629,10 @@ function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
 
     // функция генерирует текст рандомный длиной $length из строки $chars
 function MakeRandom($length=4,$chars='abcdef1234567890') {
-  $size = max(0,strlen($chars)-1); 
+  $size = max(0,strlen($chars)-1);
   $password = ''; 
   if (intval($length)) while($length--) $password .= $chars[rand(0,$size)];
-  elseif ('syncId'==$length) $password = MakeRandom(8).'-'.MakeRandom().'-'.MakeRandom().'-'.MakeRandom().'-'.MakeRandom(12);
+  elseif (in_array($length,['syncId','UID','UUID','uuid','uid','guid','GUID'])) $password = MakeRandom(8).'-'.MakeRandom().'-'.MakeRandom().'-'.MakeRandom().'-'.MakeRandom(12);
   return $password;
 }
 
