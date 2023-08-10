@@ -887,7 +887,7 @@ function GetPart($mbox, $mid, $p, $partno=0) {
       imap_fetchbody($mbox, $mid, $partno) :  // multipart
       imap_body($mbox, $mid);  // simple
   if (4==$p->encoding) $data = quoted_printable_decode($data);
-  else if (1==$p->encoding) $data = imap_8bit($data);
+  //else if (1==$p->encoding) $data = imap_8bit($data);
   elseif (3==$p->encoding) $data = base64_decode($data);
     // PARAMETERS
   $params = [];
