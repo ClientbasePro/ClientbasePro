@@ -5,13 +5,13 @@
 	"authors": [
 		{
 			"name": "Anton Kravchenko",
-			"email": "a@10crm.ru",
+			"email": "dev@clientbasepro.ru",
 			"homepage": "http://clientbasepro.ru",
 			"role": "Developer"
 		}
 	],
 	"support": {
-		"email": "support@10crm.ru"
+		"email": "support@clientbasepro.ru"
 	},
 	"require":{
 		"php":">=5.3.0"
