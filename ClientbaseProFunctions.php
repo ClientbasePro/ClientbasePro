@@ -176,7 +176,7 @@ function GetAccount($number='',$email='',$someId=0,$settings=[]) {
 		}
 	    else $idCond = " AND id<>'".$someId."' ";
     }
-    if ($accountFieldDouble) $doubleCond = " AND f".$accountFieldDouble."='' ";
+    if ($accountFieldDouble && !$settings) $doubleCond = " AND f".$accountFieldDouble."='' ";
         // 1 попытка - прямое совпадение или LIKE
     $e = sql_fetch_assoc(data_select_field($accountTableId, 'id', "status=0 AND ({$mainCond}) {$idCond} {$doubleCond} ORDER BY id DESC LIMIT 1"));
     if ($e['id']) return $e['id'];
@@ -265,7 +265,7 @@ function GetContact($number='',$email='',$someId=0,$settings=[]) {
     $mainCond = $idCond = '';
 	if ($fieldPhone) foreach ($numbers as $num) $mainCond .= ((!$mainCond)?"":" OR ")."f".$fieldPhone."='".$num."' ".((1000<$num)?" OR f".$fieldPhone." LIKE '%".$num."%' ":"");
 	if ($fieldEmail) foreach ($emails as $mail) $mainCond .= ((!$mainCond)?"":" OR ")."f".$fieldEmail."='".$mail."' OR f".$fieldEmail." LIKE '%".$mail."%' ";
-    if ($fieldDouble) {
+    if ($fieldDouble && !$settings) {
 		$e = sql_fetch_assoc(sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id='".$fieldDouble."' AND table_id='".$tableId."' LIMIT 2"));
 		if ($e['id']) $doubleCond = " AND f".$fieldDouble."='' ";
     }
