@@ -84,6 +84,9 @@ function SetNumber($number, $code='', $plus='+', $format=false) {
     // Таджикистан
   if (!$result && 0===strpos($str,'992') && 12==$strlen) $result = $plus.$str;
   if (!$result && defined('DEFAULT_COUNTRY_CODE') && 992==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
+    // Кыргызстан
+  if (!$result && 0===strpos($str,'996') && 12==$strlen) $result = $plus.$str;
+  if (!$result && defined('DEFAULT_COUNTRY_CODE') && 996==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
     // далее короткие внутренние 3-хзначные
   if (!$result && 3==$strlen && 1000>$str) $result = $str;
     // далее российские 11-значные номера, начинающиеся на 7 или 8
