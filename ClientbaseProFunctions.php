@@ -578,15 +578,50 @@ function GetWorkDaysDiff($start='',$end='',$holidays=[]) {
   // функция возвращаем массив id=>$value таблицы $tableId по полю $fieldId, с доп.условием $cond
   // к итоговому массиву применяется функция $function через array_map
 function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
-  // установка условия
-  $cond = ($cond) ? $cond : 1;  
-  // проверка входных данных
-  if (!$tableId && !$fields) {
+  $tmp = [];
+    // проверка количества входных параметров
+  $argumentsCnt = func_num_args();
+    // установка условия
+  $cond = ($cond) ? $cond : 1;
+    // если нет ни $tableId, ни $fields - считаем это запросом к таблице пользователей с условием $cond
+  if (!$argumentsCnt || (!$tableId && !$fields && 2<$argumentsCnt)) {
+	  // если сортировка не указана, сортируем по ФИО
+	if (false===strpos($cond,'ORDER BY')) $cond .= " ORDER BY fio";
+	  // заполняем результирующий массив $tmp
 	$res = sql_query("SELECT id, fio FROM ".USERS_TABLE." WHERE ".$cond);
     while ($row=sql_fetch_assoc($res)) $tmp[$row['id']] = $row['fio'];
-	  // маппинг
+	  // mapping
     if ($function) $tmp = array_map($function, $tmp);
     return $tmp;
+  }
+	// если получили 1 входной параметр, считаем, что это id поля или массив полей
+  if (1==$argumentsCnt) {
+    $fields = $tableId;
+	$fieldId = 0;
+	  // если получили массив - ищем таблицу по 1-му полю из массива
+    if (is_array($fields)) {
+      $field_ = array_keys($fields)[0];
+      if (is_numeric($field_)) $fieldId = $field_;
+	  elseif (is_string($field_)) {
+		$field_ = substr($field_,1);
+        if (is_numeric($field_)) $fieldId = $field_;
+		else return false;
+      }
+	  else return false;
+    }
+	  // получили число - его и берём
+	elseif (is_numeric($fields)) $fieldId = $fields;
+	  // получили строку - убираем первый символ и проверяем, число ли это
+	elseif (is_string($fields)) {
+	  $fields_ = substr($fields,1);
+      if (is_numeric($fields_)) $fieldId = $fields_;
+      else return false;
+    }
+	else return false;
+	  // ищем таблицу
+    $e = sql_fetch_assoc(sql_query("SELECT table_id AS t FROM ".FIELDS_TABLE." WHERE id=$fieldId LIMIT 1"));
+    if ($e['t']) $tableId = $e['t'];
+    else return false;
   }
   $tableId = intval($tableId);
     // форматируем $fields, когда это не число и не массив (например, строка 'f12345')
@@ -599,18 +634,16 @@ function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
     $e = sql_fetch_assoc(sql_query("SELECT table_id AS t FROM ".FIELDS_TABLE." WHERE id='".$fields."' LIMIT 1"));
     if ($e['t']) $tableId = $e['t'];
     else return false;
-  }
-    // результирующий массив
-  $tmp = [];  
+  } 
     // если $fields - число, формируем массив id=>поле
   if (is_numeric($fields)) {
 	$res = sql_query("SELECT id, f".$fields." AS value FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
     while ($row=sql_fetch_assoc($res)) $tmp[$row['id']] = $row['value'];
-      // маппинг
+      // mapping
     if ($function) $tmp = array_map($function, $tmp);
     return $tmp;
   }
-    // если $fields - массив, формируем результирующий массив id=>array('field'=>'value')  
+    // если $fields - массив, формируем результирующий массив id=>array('field'=>'value')
   elseif (is_array($fields)) {
     foreach ($fields as $field=>$name) {
 	  if (is_numeric($field)) $field = 'f'.$field;
@@ -618,17 +651,16 @@ function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
 	}
 	$fields = implode(', ', $f);
 	$res = sql_query("SELECT id, ".$fields." FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
-    while ($row=sql_fetch_assoc($res)) { 
-	  $id = $row['id']; 
-	  unset($row['id']); 
+    while ($row=sql_fetch_assoc($res)) {
+	  $id = $row['id'];
+	  unset($row['id']);
 	  if ($function) $row = array_map($function, $row); 
-	  $tmp[$id] = $row; 
+	  $tmp[$id] = $row;
 	}
 	return $tmp;
   }
-  return false;  
+  return false;
 }
-
 
     // функция генерирует текст рандомный длиной $length из строки $chars
 function MakeRandom($length=4,$chars='abcdef1234567890') {
