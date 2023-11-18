@@ -585,12 +585,15 @@ function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
   $cond = ($cond) ? $cond : 1;
     // если нет ни $tableId, ни $fields - считаем это запросом к таблице пользователей с условием $cond
   if (!$argumentsCnt || (!$tableId && !$fields && 2<$argumentsCnt)) {
-	  // если сортировка не указана, сортируем по ФИО
-	if (false===strpos($cond,'ORDER BY')) $cond .= " ORDER BY fio";
-	  // заполняем результирующий массив $tmp
-	$res = sql_query("SELECT id, fio FROM ".USERS_TABLE." WHERE ".$cond);
+      // если сортировка не указана, сортируем по ФИО
+    if (false===strpos($cond,'ORDER BY')) {
+      if (false!==strpos($cond,' LIMIT ')) $cond = str_replace(' LIMIT ', ' ORDER BY fio LIMIT ', $cond);
+      else $cond .= " ORDER BY fio";
+    }
+      // заполняем результирующий массив $tmp
+    $res = sql_query("SELECT id, fio FROM ".USERS_TABLE." WHERE ".$cond);
     while ($row=sql_fetch_assoc($res)) $tmp[$row['id']] = $row['fio'];
-	  // mapping
+      // mapping
     if ($function) $tmp = array_map($function, $tmp);
     return $tmp;
   }
