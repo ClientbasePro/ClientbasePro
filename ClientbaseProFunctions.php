@@ -45,7 +45,7 @@ function GetCurrency($date='', $currency='EUR') {
         $pattern = '/<Valute ID=\"R.{5}\".+?<CharCode>'.$currency.'<\/CharCode>(.*?)<\/Valute\>/is';
         preg_match($pattern, $response, $m);
         preg_match("/<Value>(.*?)<\/Value>/is", $m[1], $r);
-	preg_match("/<Nominal>(.*?)<\/Nominal>/is", $m[1], $r2);
+    preg_match("/<Nominal>(.*?)<\/Nominal>/is", $m[1], $r2);
         return floatval(str_replace(",", ".", $r[1])/((1<$r2[1])?$r2[1]:1));
     }
     curl_close($curl);
@@ -57,9 +57,9 @@ function GetCurrency($date='', $currency='EUR') {
     // $number - номер телефона в любом формате
     // $code - код города по умолчанию, по умолчанию 495 Москва
     // $plus - отображать ли "+" перед выводимым номером
-	// $format - формат вывода. Допустимы лат.буквы, цифры и звёздочки. Если длина формата меньше длины номера, то замена последних цифр будет по последнему символу формата
-	// формат накладывается на номер как маска: звёздочка заменяет очередную цифру номера на звёздочку, буква/цифра не меняет
-	// примеры для номера +74951234567: '+7ABC***00**'=>+7495***45**, '8495*'=>+7495*******, '8495N'=>+74951234567, '849*XXX*'=>+749*123****, '8499NNN*'=>+7495123****	
+    // $format - формат вывода. Допустимы лат.буквы, цифры и звёздочки. Если длина формата меньше длины номера, то замена последних цифр будет по последнему символу формата
+    // формат накладывается на номер как маска: звёздочка заменяет очередную цифру номера на звёздочку, буква/цифра не меняет
+    // примеры для номера +74951234567: '+7ABC***00**'=>+7495***45**, '8495*'=>+7495*******, '8495N'=>+74951234567, '849*XXX*'=>+749*123****, '8499NNN*'=>+7495123****  
 function SetNumber($number, $code='', $plus='+', $format=false) {
     // начальная проверка и корректировка входных данных
   if (!$plus && false!==$plus) $plus = '+';
@@ -87,9 +87,6 @@ function SetNumber($number, $code='', $plus='+', $format=false) {
     // Кыргызстан
   if (!$result && 0===strpos($str,'996') && 12==$strlen) $result = $plus.$str;
   if (!$result && defined('DEFAULT_COUNTRY_CODE') && 996==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
-    // Узбекистан
-  if (!$result && 0===strpos($str,'998') && 12==$strlen) $result = $plus.$str;
-  if (!$result && defined('DEFAULT_COUNTRY_CODE') && 998==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
     // далее короткие внутренние 3-хзначные
   if (!$result && 3==$strlen && 1000>$str) $result = $str;
     // далее российские 11-значные номера, начинающиеся на 7 или 8
@@ -131,56 +128,56 @@ function SetNumber($number, $code='', $plus='+', $format=false) {
 
 
     // функция возвращает id клиента 
-	// поиск по номеру телефона $number (1 номер, массив номеров, список номеров через запятую) 
-	// или эл.почте $email (1 адрес, массив адресов, список адресов через запятую и точку с запятой) 
-	// из поиска исключается контрагент с id $someId
-	// $settings - массив настроек таблиц и полей для поиска
-	// ключи ACCOUNT_TABLE, ACCOUNT_FIELD_PHONE, ACCOUNT_FIELD_EMAIL, ACCOUNT_FIELD_DOUBLE, CONTACT_TABLE, CONTACT_FIELD_PHONE, CONTACT_FIELD_EMAIL, CONTACT_FIELD_ACCOUNTID, CONTACT_FIELD_DOUBLE
+    // поиск по номеру телефона $number (1 номер, массив номеров, список номеров через запятую) 
+    // или эл.почте $email (1 адрес, массив адресов, список адресов через запятую и точку с запятой) 
+    // из поиска исключается контрагент с id $someId
+    // $settings - массив настроек таблиц и полей для поиска
+    // ключи ACCOUNT_TABLE, ACCOUNT_FIELD_PHONE, ACCOUNT_FIELD_EMAIL, ACCOUNT_FIELD_DOUBLE, CONTACT_TABLE, CONTACT_FIELD_PHONE, CONTACT_FIELD_EMAIL, CONTACT_FIELD_ACCOUNTID, CONTACT_FIELD_DOUBLE
 function GetAccount($number='',$email='',$someId=0,$settings=[]) {
-		// формируем массив телефонных номеров из $number
-	if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
-	elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
-		// формируем массив адресов E-mail из $email
-	if (is_array($email)) { foreach ($email as $mail) if (($mail=trim($mail)) && filter_var($mail,FILTER_VALIDATE_EMAIL)) $emails[$mail] = $mail; }
-	elseif ($email) foreach (explode(',',$email) as $m1) foreach (explode(';',$m1) as $m2) if (($m2=trim($m2)) && filter_var($m2,FILTER_VALIDATE_EMAIL)) $emails[$m2] = $m2;
-		// если нет ни одного отформатированного контакта, завершаем
+        // формируем массив телефонных номеров из $number
+    if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
+    elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
+        // формируем массив адресов E-mail из $email
+    if (is_array($email)) { foreach ($email as $mail) if (($mail=trim($mail)) && filter_var($mail,FILTER_VALIDATE_EMAIL)) $emails[$mail] = $mail; }
+    elseif ($email) foreach (explode(',',$email) as $m1) foreach (explode(';',$m1) as $m2) if (($m2=trim($m2)) && filter_var($m2,FILTER_VALIDATE_EMAIL)) $emails[$m2] = $m2;
+        // если нет ни одного отформатированного контакта, завершаем
     if (!$numbers && !$emails) return false;
         // проверка id таблиц и полей
-		// сначала из переданных настроек
+        // сначала из переданных настроек
     if ($settings) {
-		$accountTableId = intval($settings['ACCOUNT_TABLE']);
-		$accountFieldPhone = intval($settings['ACCOUNT_FIELD_PHONE']);
-		$accountFieldEmail = intval($settings['ACCOUNT_FIELD_EMAIL']);
-		$accountFieldDouble = intval($settings['ACCOUNT_FIELD_DOUBLE']);
-	}
-	    // далее проверка по константам
-	if (!$accountTableId && defined('ACCOUNT_TABLE')) $accountTableId = intval(ACCOUNT_TABLE);
+        $accountTableId = intval($settings['ACCOUNT_TABLE']);
+        $accountFieldPhone = intval($settings['ACCOUNT_FIELD_PHONE']);
+        $accountFieldEmail = intval($settings['ACCOUNT_FIELD_EMAIL']);
+        $accountFieldDouble = intval($settings['ACCOUNT_FIELD_DOUBLE']);
+    }
+        // далее проверка по константам
+    if (!$accountTableId && defined('ACCOUNT_TABLE')) $accountTableId = intval(ACCOUNT_TABLE);
     if (!$accountFieldPhone && defined('ACCOUNT_FIELD_PHONE')) $accountFieldPhone = intval(ACCOUNT_FIELD_PHONE);
     if (!$accountFieldEmail && defined('ACCOUNT_FIELD_EMAIL')) $accountFieldEmail = intval(ACCOUNT_FIELD_EMAIL);
     if (!$accountFieldDouble && defined('ACCOUNT_FIELD_DOUBLE')) $accountFieldDouble = intval(ACCOUNT_FIELD_DOUBLE);
-	  // далее проверка по стандартным полям КБ
-	if (!$accountTableId) {
-		$accountTableId = 42;
-		$accountFieldPhone = 441;
-		$accountFieldEmail = 442;
-	}
-	    // проверка наличия полей $accountFieldPhone,$accountFieldEmail в таблице $accountTableId
-	$e = [];
-	$res = sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id IN ('".$accountFieldPhone."','".$accountFieldEmail."') AND table_id='".$accountTableId."' LIMIT 2");
-	while ($row=sql_fetch_assoc($res)) $e[$row['id']] = $row['id'];
-	if (!$e[$accountFieldPhone] && !$e[$accountFieldEmail]) return false;	
+      // далее проверка по стандартным полям КБ
+    if (!$accountTableId) {
+        $accountTableId = 42;
+        $accountFieldPhone = 441;
+        $accountFieldEmail = 442;
+    }
+        // проверка наличия полей $accountFieldPhone,$accountFieldEmail в таблице $accountTableId
+    $e = [];
+    $res = sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id IN ('".$accountFieldPhone."','".$accountFieldEmail."') AND table_id='".$accountTableId."' LIMIT 2");
+    while ($row=sql_fetch_assoc($res)) $e[$row['id']] = $row['id'];
+    if (!$e[$accountFieldPhone] && !$e[$accountFieldEmail]) return false;   
     if (!$accountTableId || (!$accountFieldPhone && !$accountFieldEmail)) return false;
         // набор условий для SQL-запросов
     $mainCond = $idCond = '';
-	if ($accountFieldPhone) foreach ($numbers as $num) $mainCond .= ((!$mainCond)?"":" OR ")."f".$accountFieldPhone."='".$num."' ".((1000<$num)?" OR f".$accountFieldPhone." LIKE '%".$num."%' ":"");
-	if ($accountFieldEmail) foreach ($emails as $mail) $mainCond .= ((!$mainCond)?"":" OR ")."f".$accountFieldEmail."='".$mail."' OR f".$accountFieldEmail." LIKE '%".$mail."%' ";
+    if ($accountFieldPhone) foreach ($numbers as $num) $mainCond .= ((!$mainCond)?"":" OR ")."f".$accountFieldPhone."='".$num."' ".((1000<$num)?" OR f".$accountFieldPhone." LIKE '%".$num."%' ":"");
+    if ($accountFieldEmail) foreach ($emails as $mail) $mainCond .= ((!$mainCond)?"":" OR ")."f".$accountFieldEmail."='".$mail."' OR f".$accountFieldEmail." LIKE '%".$mail."%' ";
     if ($someId) {
         if (is_array($someId)) { 
-			$someIds = [];
-			foreach ($someId as $id_) if ($id_=intval($id_)) $someIds[$id_] = $id_;
-			if ($someIds) $idCond = " AND id NOT IN (".implode(',',$someIds).") ";
-		}
-	    else $idCond = " AND id<>'".$someId."' ";
+            $someIds = [];
+            foreach ($someId as $id_) if ($id_=intval($id_)) $someIds[$id_] = $id_;
+            if ($someIds) $idCond = " AND id NOT IN (".implode(',',$someIds).") ";
+        }
+        else $idCond = " AND id<>'".$someId."' ";
     }
     if ($accountFieldDouble && !$settings) $doubleCond = " AND f".$accountFieldDouble."='' ";
         // 1 попытка - прямое совпадение или LIKE
@@ -189,99 +186,99 @@ function GetAccount($number='',$email='',$someId=0,$settings=[]) {
         // 2 попытка - поиск по номеру телефона, кроме совпадения по шаблонам [0-9]{3} и +7[0-9]{10} (чтобы повторно не искать среди одиночных номеров по формату)
     if ($number && $accountFieldPhone) {
         $patternCond = " AND f".$accountFieldPhone." NOT RLIKE '^[0-9]{3}$' AND f".$accountFieldPhone." NOT RLIKE '^[+]7[0-9]{10}$' ";
-		$res = data_select_field($accountTableId, 'id, f'.$accountFieldPhone.' as phone', "status=0 AND f".$accountFieldPhone."<>'' {$doubleCond} {$idCond} {$patternCond} ORDER BY id DESC");
+        $res = data_select_field($accountTableId, 'id, f'.$accountFieldPhone.' as phone', "status=0 AND f".$accountFieldPhone."<>'' {$doubleCond} {$idCond} {$patternCond} ORDER BY id DESC");
         while ($row=sql_fetch_assoc($res)) {
             $phones = explode(',', $row['phone']);
             foreach ($phones as $p) if (in_array(SetNumber($p),$numbers)) return $row['id'];
         }
     }
         // 3 попытка - поиск через контактное лицо 
-	if ($settings) {
-		$contactTableId = intval($settings['CONTACT_TABLE']);
-		$contactFieldAccountId = intval($settings['CONTACT_FIELD_ACCOUNTID']);
-		$contactFieldDouble = intval($settings['CONTACT_FIELD_DOUBLE']);
-	}
-	if (!$contactTableId && defined('CONTACT_TABLE')) $contactTableId = intval(CONTACT_TABLE);
+    if ($settings) {
+        $contactTableId = intval($settings['CONTACT_TABLE']);
+        $contactFieldAccountId = intval($settings['CONTACT_FIELD_ACCOUNTID']);
+        $contactFieldDouble = intval($settings['CONTACT_FIELD_DOUBLE']);
+    }
+    if (!$contactTableId && defined('CONTACT_TABLE')) $contactTableId = intval(CONTACT_TABLE);
     if (!$contactFieldAccountId && defined('CONTACT_FIELD_ACCOUNTID')) $contactFieldAccountId = intval(CONTACT_FIELD_ACCOUNTID);
-	if (!$contactFieldDouble && defined('CONTACT_FIELD_DOUBLE')) $contactFieldDouble = intval(CONTACT_FIELD_DOUBLE);
-	if (!$contactTableId && 42==$accountTableId) {
-	    $contactTableId = 51;
-		$contactFieldAccountId = 545;
-	}	
-	if ($contactTableId && $contactFieldAccountId) {
-		$e = sql_fetch_assoc(sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id='".$contactFieldAccountId."' AND table_id='".$contactTableId."' LIMIT 1"));
-		if (!$e['id']) return false;	
-		$cids = [];
-		if ($idCond) {
-		  $idCond_ = str_replace(["NOT IN","<>"], ["IN","="], $idCond);
-		  $cids = GetArrayFromTable($contactTableId, $contactFieldAccountId, "f".$contactFieldAccountId." IN (SELECT id FROM ".DATA_TABLE.$accountTableId." WHERE 1 {$idCond_})");
-		}
-		if ($cids) $cids = array_keys($cids);
-		if ($contact=intval(GetContact($number,$email,$cids,$settings))) {
-			if ($contactFieldDouble) {
-				$e = sql_fetch_assoc(sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id='".$contactFieldDouble."' AND table_id='".$contactTableId."' LIMIT 1"));
-				if ($e['id']) $cc = " AND f".$contactFieldDouble."='' ";
-			}
-			$e = sql_fetch_assoc(data_select_field($contactTableId, 'f'.$contactFieldAccountId.' AS accountId', "id='".$contact."' {$cc} LIMIT 1"));
-			if ($e['accountId']) return $e['accountId'];        
-		}
-	}
+    if (!$contactFieldDouble && defined('CONTACT_FIELD_DOUBLE')) $contactFieldDouble = intval(CONTACT_FIELD_DOUBLE);
+    if (!$contactTableId && 42==$accountTableId) {
+        $contactTableId = 51;
+        $contactFieldAccountId = 545;
+    }   
+    if ($contactTableId && $contactFieldAccountId) {
+        $e = sql_fetch_assoc(sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id='".$contactFieldAccountId."' AND table_id='".$contactTableId."' LIMIT 1"));
+        if (!$e['id']) return false;    
+        $cids = [];
+        if ($idCond) {
+          $idCond_ = str_replace(["NOT IN","<>"], ["IN","="], $idCond);
+          $cids = GetArrayFromTable($contactTableId, $contactFieldAccountId, "f".$contactFieldAccountId." IN (SELECT id FROM ".DATA_TABLE.$accountTableId." WHERE 1 {$idCond_})");
+        }
+        if ($cids) $cids = array_keys($cids);
+        if ($contact=intval(GetContact($number,$email,$cids,$settings))) {
+            if ($contactFieldDouble) {
+                $e = sql_fetch_assoc(sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id='".$contactFieldDouble."' AND table_id='".$contactTableId."' LIMIT 1"));
+                if ($e['id']) $cc = " AND f".$contactFieldDouble."='' ";
+            }
+            $e = sql_fetch_assoc(data_select_field($contactTableId, 'f'.$contactFieldAccountId.' AS accountId', "id='".$contact."' {$cc} LIMIT 1"));
+            if ($e['accountId']) return $e['accountId'];        
+        }
+    }
     return false;
 }
 
 
     // функция возвращает id контактного лица 
-	// поиск по номеру телефона $number (1 номер, массив номеров, список номеров через запятую) 
-	// или эл.почте $email (1 адрес, массив адресов, список адресов через запятую и точку с запятой) 
-	// из поиска исключается контрагент с id $someId
-	// $settings - массив настроек таблиц и полей для поиска, ключи CONTACT_TABLE, CONTACT_FIELD_PHONE, CONTACT_FIELD_EMAIL, CONTACT_FIELD_DOUBLE
+    // поиск по номеру телефона $number (1 номер, массив номеров, список номеров через запятую) 
+    // или эл.почте $email (1 адрес, массив адресов, список адресов через запятую и точку с запятой) 
+    // из поиска исключается контрагент с id $someId
+    // $settings - массив настроек таблиц и полей для поиска, ключи CONTACT_TABLE, CONTACT_FIELD_PHONE, CONTACT_FIELD_EMAIL, CONTACT_FIELD_DOUBLE
 function GetContact($number='',$email='',$someId=0,$settings=[]) {
-    	// формируем массив телефонных номеров из $number
-	if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
-	elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
-		// формируем массив адресов E-mail из $email
-	if (is_array($email)) { foreach ($email as $mail) if ($mail && filter_var($mail,FILTER_VALIDATE_EMAIL)) $emails[$mail] = $mail; }
-	elseif ($email) foreach (explode(',',$email) as $m1) foreach (explode(';',$m1) as $m2) if ($m2 && filter_var($m2,FILTER_VALIDATE_EMAIL)) $emails[$m2] = $m2;
-		// если нет ни одного отформатированного контакта, завершаем
+        // формируем массив телефонных номеров из $number
+    if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
+    elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
+        // формируем массив адресов E-mail из $email
+    if (is_array($email)) { foreach ($email as $mail) if ($mail && filter_var($mail,FILTER_VALIDATE_EMAIL)) $emails[$mail] = $mail; }
+    elseif ($email) foreach (explode(',',$email) as $m1) foreach (explode(';',$m1) as $m2) if ($m2 && filter_var($m2,FILTER_VALIDATE_EMAIL)) $emails[$m2] = $m2;
+        // если нет ни одного отформатированного контакта, завершаем
     if (!$numbers && !$emails) return false;
-		// проверка id таблиц и полей   
+        // проверка id таблиц и полей   
     if ($settings) {
-		$tableId = intval($settings['CONTACT_TABLE']);
-		$fieldPhone = intval($settings['CONTACT_FIELD_PHONE']);
-		$fieldEmail = intval($settings['CONTACT_FIELD_EMAIL']);
-		$fieldDouble = intval($settings['CONTACT_FIELD_DOUBLE']);
-	}
-			// доп.проверка для полей контактов
+        $tableId = intval($settings['CONTACT_TABLE']);
+        $fieldPhone = intval($settings['CONTACT_FIELD_PHONE']);
+        $fieldEmail = intval($settings['CONTACT_FIELD_EMAIL']);
+        $fieldDouble = intval($settings['CONTACT_FIELD_DOUBLE']);
+    }
+            // доп.проверка для полей контактов
     if (!$tableId && defined('CONTACT_TABLE')) $tableId = intval(CONTACT_TABLE);
     if (!$fieldPhone && defined('CONTACT_FIELD_PHONE')) $fieldPhone = intval(CONTACT_FIELD_PHONE);
     if (!$fieldEmail && defined('CONTACT_FIELD_EMAIL')) $fieldEmail = intval(CONTACT_FIELD_EMAIL);
-    if (!$fieldDouble && defined('CONTACT_FIELD_DOUBLE')) $fieldDouble = intval(CONTACT_FIELD_DOUBLE);	
-		// проверка по стандартным полям КБ
-	if (!$tableId) {
-		$tableId = 51;
-		$fieldPhone = 548;
-		$fieldEmail = 549;
-	}
-	$e = [];
-	$res = sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id IN ('".$fieldPhone."','".$fieldEmail."') AND table_id='".$tableId."' LIMIT 2");
-	while ($row=sql_fetch_assoc($res)) $e[$row['id']] = $row['id'];
-	if (!$e[$fieldPhone] || !$e[$fieldEmail]) return false;
+    if (!$fieldDouble && defined('CONTACT_FIELD_DOUBLE')) $fieldDouble = intval(CONTACT_FIELD_DOUBLE);  
+        // проверка по стандартным полям КБ
+    if (!$tableId) {
+        $tableId = 51;
+        $fieldPhone = 548;
+        $fieldEmail = 549;
+    }
+    $e = [];
+    $res = sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id IN ('".$fieldPhone."','".$fieldEmail."') AND table_id='".$tableId."' LIMIT 2");
+    while ($row=sql_fetch_assoc($res)) $e[$row['id']] = $row['id'];
+    if (!$e[$fieldPhone] || !$e[$fieldEmail]) return false;
     if (!$tableId || (!$fieldPhone && !$fieldEmail)) return false;
         // набор условий для SQL-запросов
     $mainCond = $idCond = '';
-	if ($fieldPhone) foreach ($numbers as $num) $mainCond .= ((!$mainCond)?"":" OR ")."f".$fieldPhone."='".$num."' ".((1000<$num)?" OR f".$fieldPhone." LIKE '%".$num."%' ":"");
-	if ($fieldEmail) foreach ($emails as $mail) $mainCond .= ((!$mainCond)?"":" OR ")."f".$fieldEmail."='".$mail."' OR f".$fieldEmail." LIKE '%".$mail."%' ";
+    if ($fieldPhone) foreach ($numbers as $num) $mainCond .= ((!$mainCond)?"":" OR ")."f".$fieldPhone."='".$num."' ".((1000<$num)?" OR f".$fieldPhone." LIKE '%".$num."%' ":"");
+    if ($fieldEmail) foreach ($emails as $mail) $mainCond .= ((!$mainCond)?"":" OR ")."f".$fieldEmail."='".$mail."' OR f".$fieldEmail." LIKE '%".$mail."%' ";
     if ($fieldDouble && !$settings) {
-		$e = sql_fetch_assoc(sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id='".$fieldDouble."' AND table_id='".$tableId."' LIMIT 2"));
-		if ($e['id']) $doubleCond = " AND f".$fieldDouble."='' ";
+        $e = sql_fetch_assoc(sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id='".$fieldDouble."' AND table_id='".$tableId."' LIMIT 2"));
+        if ($e['id']) $doubleCond = " AND f".$fieldDouble."='' ";
     }
-	if ($someId) {
+    if ($someId) {
         if (is_array($someId)) { 
-			$someIds = [];
-			foreach ($someId as $id_) if ($id_=intval($id_)) $someIds[$id_] = $id_;
-			if ($someIds) $idCond = " AND id NOT IN (".implode(',',$someIds).") ";
-		}
-	    else $idCond = " AND id<>'".$someId."' ";
+            $someIds = [];
+            foreach ($someId as $id_) if ($id_=intval($id_)) $someIds[$id_] = $id_;
+            if ($someIds) $idCond = " AND id NOT IN (".implode(',',$someIds).") ";
+        }
+        else $idCond = " AND id<>'".$someId."' ";
     }
         // 1 попытка - прямое совпадение или LIKE
     $e = sql_fetch_assoc(data_select_field($tableId, 'id', "status=0 AND ({$mainCond}) {$idCond} {$doubleCond} ORDER BY add_time DESC LIMIT 1"));
@@ -289,7 +286,7 @@ function GetContact($number='',$email='',$someId=0,$settings=[]) {
         // 2 попытка - поиск по номеру телефона
     if ($number && $fieldPhone) {
         $patternCond = " AND f".$fieldPhone." NOT RLIKE '^[0-9]{3}$' AND f".$fieldPhone." NOT RLIKE '^[+]7[0-9]{10}$' ";
-		$res = data_select_field($tableId, 'id, f'.$fieldPhone.' as phone', "status=0 AND f".$fieldPhone."<>''  {$idCond} {$patternCond} ORDER BY add_time DESC");
+        $res = data_select_field($tableId, 'id, f'.$fieldPhone.' as phone', "status=0 AND f".$fieldPhone."<>''  {$idCond} {$patternCond} ORDER BY add_time DESC");
         while ($row=sql_fetch_assoc($res)) {
             $phones = explode(',', $row['phone']);
             foreach ($phones as $p) if (in_array(SetNumber($p),$numbers)) return $row['id'];
@@ -300,48 +297,48 @@ function GetContact($number='',$email='',$someId=0,$settings=[]) {
 
 
     // функция обновляет контактные данные клиента с id = $accountId
-	// добавляет номер(-а) телефона $number (1 номер, массив номеров, список номеров через запятую) 
-	// или эл.почте $email (1 адрес, массив адресов, список адресов через запятую и точку с запятой) 
-	// $settings - массив настроек таблиц и полей для поиска, ключи ACCOUNT_TABLE, ACCOUNT_FIELD_PHONE, ACCOUNT_FIELD_EMAIL
+    // добавляет номер(-а) телефона $number (1 номер, массив номеров, список номеров через запятую) 
+    // или эл.почте $email (1 адрес, массив адресов, список адресов через запятую и точку с запятой) 
+    // $settings - массив настроек таблиц и полей для поиска, ключи ACCOUNT_TABLE, ACCOUNT_FIELD_PHONE, ACCOUNT_FIELD_EMAIL
 function UpdateAccount($accountId=0,$number='',$email='',$settings=[]) {
         // проверка входных данных
     $accountId = intval($accountId);
-	if (!$accountId) return false;
-    	// формируем массив телефонных номеров из $number
-	if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
-	elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
-		// формируем массив адресов E-mail из $email
-	if (is_array($email)) { foreach ($email as $mail) if ($mail && filter_var($mail,FILTER_VALIDATE_EMAIL)) $emails[$mail] = $mail; }
-	elseif ($email) foreach (explode(',',$email) as $m1) foreach (explode(';',$m1) as $m2) if ($m2 && filter_var($m2,FILTER_VALIDATE_EMAIL)) $emails[$m2] = $m2;
-		// если нет ни одного отформатированного контакта, завершаем
+    if (!$accountId) return false;
+        // формируем массив телефонных номеров из $number
+    if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
+    elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
+        // формируем массив адресов E-mail из $email
+    if (is_array($email)) { foreach ($email as $mail) if ($mail && filter_var($mail,FILTER_VALIDATE_EMAIL)) $emails[$mail] = $mail; }
+    elseif ($email) foreach (explode(',',$email) as $m1) foreach (explode(';',$m1) as $m2) if ($m2 && filter_var($m2,FILTER_VALIDATE_EMAIL)) $emails[$m2] = $m2;
+        // если нет ни одного отформатированного контакта, завершаем
     if (!$emails && !$numbers) return false;
         // проверка id таблиц и полей    
-	if ($settings) {
-		$tableId = intval($settings['ACCOUNT_TABLE']);
-		$fieldPhone = intval($settings['ACCOUNT_FIELD_PHONE']);
-		$fieldEmail = intval($settings['ACCOUNT_FIELD_EMAIL']);
-	}
-	    // далее проверка по константам
-	if (!$tableId && defined('ACCOUNT_TABLE')) $tableId = intval(ACCOUNT_TABLE);
+    if ($settings) {
+        $tableId = intval($settings['ACCOUNT_TABLE']);
+        $fieldPhone = intval($settings['ACCOUNT_FIELD_PHONE']);
+        $fieldEmail = intval($settings['ACCOUNT_FIELD_EMAIL']);
+    }
+        // далее проверка по константам
+    if (!$tableId && defined('ACCOUNT_TABLE')) $tableId = intval(ACCOUNT_TABLE);
     if (!$fieldPhone && defined('ACCOUNT_FIELD_PHONE')) $fieldPhone = intval(ACCOUNT_FIELD_PHONE);
     if (!$fieldEmail && defined('ACCOUNT_FIELD_EMAIL')) $fieldEmail = intval(ACCOUNT_FIELD_EMAIL);
-	  // далее проверка по стандартным полям КБ
-	if (!$tableId) {
-		$tableId = 42;
-		$fieldPhone = 441;
-		$fieldEmail = 442;
-	}
-	    // проверка наличия полей $fieldPhone,$fieldEmail в таблице $tableId
-	$e = [];
-	$res = sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id IN ('".$fieldPhone."','".$fieldEmail."') AND table_id='".$tableId."' LIMIT 2");
-	while ($row=sql_fetch_assoc($res)) $e[$row['id']] = $row['id'];	
+      // далее проверка по стандартным полям КБ
+    if (!$tableId) {
+        $tableId = 42;
+        $fieldPhone = 441;
+        $fieldEmail = 442;
+    }
+        // проверка наличия полей $fieldPhone,$fieldEmail в таблице $tableId
+    $e = [];
+    $res = sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id IN ('".$fieldPhone."','".$fieldEmail."') AND table_id='".$tableId."' LIMIT 2");
+    while ($row=sql_fetch_assoc($res)) $e[$row['id']] = $row['id']; 
     if (!$e[$fieldPhone] || !$e[$fieldEmail]) return false;
     $row = sql_fetch_assoc(data_select_field($tableId, 'f'.$fieldPhone.' AS phone, f'.$fieldEmail.' AS email', "id='".$accountId."' LIMIT 1"));
         // добавление E-mail
     foreach ($emails as $email) if (false===strpos($row['email'],$email)) $upd['f'.$fieldEmail] = (($row['email'])?$row['email'].'; ':'').$email;
         // добавление телефона
-	foreach (explode(',',$row['phone']) as $phone) if ($phone=SetNumber($phone)) unset($numbers[$phone]);	
-	if ($numbers) $upd['f'.$fieldPhone] = (($row['phone'])?$row['phone'].', ':'').implode(', ',$numbers);    
+    foreach (explode(',',$row['phone']) as $phone) if ($phone=SetNumber($phone)) unset($numbers[$phone]);   
+    if ($numbers) $upd['f'.$fieldPhone] = (($row['phone'])?$row['phone'].', ':'').implode(', ',$numbers);    
         // обновляем контактную информацию клиента
     if ($upd) { data_update($tableId, EVENTS_ENABLE, $upd, "id='".$accountId."' LIMIT 1"); return $upd; }
     return false;
@@ -349,47 +346,47 @@ function UpdateAccount($accountId=0,$number='',$email='',$settings=[]) {
 
 
     // функция обновляет контактные данные контактного лица с id = $contactId
-	// добавляет номер(-а) телефона $number (1 номер, массив номеров, список номеров через запятую) 
-	// или эл.почте $email (1 адрес, массив адресов, список адресов через запятую и точку с запятой) 
-	// $settings - массив настроек таблиц и полей для поиска, ключи CONTACT_TABLE, CONTACT_FIELD_PHONE, CONTACT_FIELD_EMAIL
+    // добавляет номер(-а) телефона $number (1 номер, массив номеров, список номеров через запятую) 
+    // или эл.почте $email (1 адрес, массив адресов, список адресов через запятую и точку с запятой) 
+    // $settings - массив настроек таблиц и полей для поиска, ключи CONTACT_TABLE, CONTACT_FIELD_PHONE, CONTACT_FIELD_EMAIL
 function UpdateContact($contactId=0,$number='',$email='',$settings=[]) {
         // проверка входных данных
     $contactId = intval($contactId);
-	if (!$contactId) return false;
-    	// формируем массив телефонных номеров из $number
-	if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
-	elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
-		// формируем массив адресов E-mail из $email
-	if (is_array($email)) { foreach ($email as $mail) if ($mail && filter_var($mail,FILTER_VALIDATE_EMAIL)) $emails[$mail] = $mail; }
-	elseif ($email) foreach (explode(',',$email) as $m1) foreach (explode(';',$m1) as $m2) if ($m2 && filter_var($m2,FILTER_VALIDATE_EMAIL)) $emails[$m2] = $m2;
-		// если нет ни одного отформатированного контакта, завершаем
+    if (!$contactId) return false;
+        // формируем массив телефонных номеров из $number
+    if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
+    elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
+        // формируем массив адресов E-mail из $email
+    if (is_array($email)) { foreach ($email as $mail) if ($mail && filter_var($mail,FILTER_VALIDATE_EMAIL)) $emails[$mail] = $mail; }
+    elseif ($email) foreach (explode(',',$email) as $m1) foreach (explode(';',$m1) as $m2) if ($m2 && filter_var($m2,FILTER_VALIDATE_EMAIL)) $emails[$m2] = $m2;
+        // если нет ни одного отформатированного контакта, завершаем
     if (!$emails && !$numbers) return false;
         // проверка id таблиц и полей
     if ($settings) {
-		$tableId = intval($settings['CONTACT_TABLE']);
-		$fieldPhone = intval($settings['CONTACT_FIELD_PHONE']);
-		$fieldEmail = intval($settings['CONTACT_FIELD_EMAIL']);
-	}
-	if (!$tableId && defined('CONTACT_TABLE')) $tableId = intval(CONTACT_TABLE);
+        $tableId = intval($settings['CONTACT_TABLE']);
+        $fieldPhone = intval($settings['CONTACT_FIELD_PHONE']);
+        $fieldEmail = intval($settings['CONTACT_FIELD_EMAIL']);
+    }
+    if (!$tableId && defined('CONTACT_TABLE')) $tableId = intval(CONTACT_TABLE);
     if (!$fieldPhone && defined('CONTACT_FIELD_PHONE')) $fieldPhone = intval(CONTACT_FIELD_PHONE);
     if (!$fieldEmail && defined('CONTACT_FIELD_EMAIL')) $fieldEmail = intval(CONTACT_FIELD_EMAIL);
-	  // далее проверка по стандартным полям КБ
-	if (!$tableId) {
-		$tableId = 51;
-		$fieldPhone = 548;
-		$fieldEmail = 549;
-	}
-	    // проверка наличия полей $fieldPhone,$fieldEmail в таблице $tableId
-	$e = [];
-	$res = sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id IN ('".$fieldPhone."','".$fieldEmail."') AND table_id='".$tableId."' LIMIT 2");
-	while ($row=sql_fetch_assoc($res)) $e[$row['id']] = $row['id'];	
+      // далее проверка по стандартным полям КБ
+    if (!$tableId) {
+        $tableId = 51;
+        $fieldPhone = 548;
+        $fieldEmail = 549;
+    }
+        // проверка наличия полей $fieldPhone,$fieldEmail в таблице $tableId
+    $e = [];
+    $res = sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id IN ('".$fieldPhone."','".$fieldEmail."') AND table_id='".$tableId."' LIMIT 2");
+    while ($row=sql_fetch_assoc($res)) $e[$row['id']] = $row['id']; 
     if (!$e[$fieldPhone] || !$e[$fieldEmail]) return false;
     $row = sql_fetch_assoc(data_select_field($tableId, 'f'.$fieldPhone.' AS phone, f'.$fieldEmail.' AS email', "status=0 AND id='".$contactId."' LIMIT 1"));
         // добавление E-mail
     foreach ($emails as $email) if (false===strpos($row['email'],$email)) $upd['f'.$fieldEmail] = (($row['email'])?$row['email'].'; ':'').$email;
         // добавление телефона
-    foreach (explode(',',$row['phone']) as $phone) if ($phone=SetNumber($phone)) unset($numbers[$phone]);	
-	if ($numbers) $upd['f'.$fieldPhone] = (($row['phone'])?$row['phone'].', ':'').implode(', ',$numbers);
+    foreach (explode(',',$row['phone']) as $phone) if ($phone=SetNumber($phone)) unset($numbers[$phone]);   
+    if ($numbers) $upd['f'.$fieldPhone] = (($row['phone'])?$row['phone'].', ':'').implode(', ',$numbers);
         // обновляем контактную информацию контакта
     if ($upd) { data_update($tableId, EVENTS_ENABLE, $upd, "id='".$contactId."' LIMIT 1"); return $upd; }
     return false;
@@ -422,8 +419,8 @@ function GetIPAddressData($IP='') {
 
 
     // функция добавляет $arrayToAdd и убирает $arrayToDelete значения в поле $fieldId в таблице $tableId в записи по условиям $cond (если $cond число, то считается id=$cond)
-	// $arrayToAdd может быть строкой или массивом
-	// $arrayToDelete может быть строкой или массивом или строкой 'delete', в этом случае будет удалён массив $arrayToAdd (пережиток предыдущей версии функции)
+    // $arrayToAdd может быть строкой или массивом
+    // $arrayToDelete может быть строкой или массивом или строкой 'delete', в этом случае будет удалён массив $arrayToAdd (пережиток предыдущей версии функции)
 function SetCheckList($tableId, $fieldId, $cond, $arrayToAdd=[], $arrayToDelete=[]) {
     // проверка входных данных
   if (!$fieldId || !$cond || (!$arrayToAdd && !$arrayToDelete)) return false;
@@ -451,13 +448,13 @@ function SetCheckList($tableId, $fieldId, $cond, $arrayToAdd=[], $arrayToDelete=
     // проходим по всем записям по условию $cond
   $res = sql_query("SELECT id, f".$fieldId." AS field FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
   while ($row=sql_fetch_assoc($res)) {
-	  // список отмеченных галочек в текущей строке
-	$checked = explode("\r\n", $row['field']);
-	  // проходим по списку всех галочек и добавляем/убираем значение в итоговый массив $data
+      // список отмеченных галочек в текущей строке
+    $checked = explode("\r\n", $row['field']);
+      // проходим по списку всех галочек и добавляем/убираем значение в итоговый массив $data
     $data = [];
     foreach ($all as $current) if ((in_array($current,$checked) && !in_array($current,$arrayToDelete)) || in_array($current,$arrayToAdd)) $data[] = $current;
-	  // обновляем текущую строку
-	data_update($tableId, EVENTS_ENABLE, ['f'.$fieldId=>implode("\r\n",$data)], "id='".$row['id']."' LIMIT 1");  
+      // обновляем текущую строку
+    data_update($tableId, EVENTS_ENABLE, ['f'.$fieldId=>implode("\r\n",$data)], "id='".$row['id']."' LIMIT 1");  
   }
   return true;
 }
@@ -501,8 +498,8 @@ function CopyFiles($source, $destination) {
   $destinationFiles = explode("\r\n", $destination['files']['files']);
     // проходим по всем файлам источника и копируем их, имена файлов добавляем в $destinationFiles
   foreach ($sourceFiles as $file) {
-	if (!in_array($file,$destinationFiles)) {
-	    // создаём папку
+    if (!in_array($file,$destinationFiles)) {
+        // создаём папку
       create_data_file_dirs($destination['fieldId'], $destination['lineId'], $file);
         // копируем файл и добавляем его имя в $destination['files']
       $file1 = get_file_path($source['fieldId'], $source['lineId'], $file);
@@ -600,31 +597,31 @@ function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
     if ($function) $tmp = array_map($function, $tmp);
     return $tmp;
   }
-	// если получили 1 входной параметр, считаем, что это id поля или массив полей
+    // если получили 1 входной параметр, считаем, что это id поля или массив полей
   if (1==$argumentsCnt) {
     $fields = $tableId;
-	$fieldId = 0;
-	  // если получили массив - ищем таблицу по 1-му полю из массива
+    $fieldId = 0;
+      // если получили массив - ищем таблицу по 1-му полю из массива
     if (is_array($fields)) {
       $field_ = array_keys($fields)[0];
       if (is_numeric($field_)) $fieldId = $field_;
-	  elseif (is_string($field_)) {
-		$field_ = substr($field_,1);
+      elseif (is_string($field_)) {
+        $field_ = substr($field_,1);
         if (is_numeric($field_)) $fieldId = $field_;
-		else return false;
+        else return false;
       }
-	  else return false;
+      else return false;
     }
-	  // получили число - его и берём
-	elseif (is_numeric($fields)) $fieldId = $fields;
-	  // получили строку - убираем первый символ и проверяем, число ли это
-	elseif (is_string($fields)) {
-	  $fields_ = substr($fields,1);
+      // получили число - его и берём
+    elseif (is_numeric($fields)) $fieldId = $fields;
+      // получили строку - убираем первый символ и проверяем, число ли это
+    elseif (is_string($fields)) {
+      $fields_ = substr($fields,1);
       if (is_numeric($fields_)) $fieldId = $fields_;
       else return false;
     }
-	else return false;
-	  // ищем таблицу
+    else return false;
+      // ищем таблицу
     $e = sql_fetch_assoc(sql_query("SELECT table_id AS t FROM ".FIELDS_TABLE." WHERE id=$fieldId LIMIT 1"));
     if ($e['t']) $tableId = $e['t'];
     else return false;
@@ -643,7 +640,7 @@ function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
   } 
     // если $fields - число, формируем массив id=>поле
   if (is_numeric($fields)) {
-	$res = sql_query("SELECT id, f".$fields." AS value FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
+    $res = sql_query("SELECT id, f".$fields." AS value FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
     while ($row=sql_fetch_assoc($res)) $tmp[$row['id']] = $row['value'];
       // mapping
     if ($function) $tmp = array_map($function, $tmp);
@@ -652,18 +649,18 @@ function GetArrayFromTable($tableId=0,$fields='',$cond='',$function='') {
     // если $fields - массив, формируем результирующий массив id=>array('field'=>'value')
   elseif (is_array($fields)) {
     foreach ($fields as $field=>$name) {
-	  if (is_numeric($field)) $field = 'f'.$field;
-	  $f[] = $field.' AS '.$name;
-	}
-	$fields = implode(', ', $f);
-	$res = sql_query("SELECT id, ".$fields." FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
+      if (is_numeric($field)) $field = 'f'.$field;
+      $f[] = $field.' AS '.$name;
+    }
+    $fields = implode(', ', $f);
+    $res = sql_query("SELECT id, ".$fields." FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
     while ($row=sql_fetch_assoc($res)) {
-	  $id = $row['id'];
-	  unset($row['id']);
-	  if ($function) $row = array_map($function, $row); 
-	  $tmp[$id] = $row;
-	}
-	return $tmp;
+      $id = $row['id'];
+      unset($row['id']);
+      if ($function) $row = array_map($function, $row); 
+      $tmp[$id] = $row;
+    }
+    return $tmp;
   }
   return false;
 }
@@ -854,15 +851,22 @@ function GetTableDataToReplace($tableId=0, $lineId=0, $fields=[], $users=[], $gr
 }
 
 
-  // функция выполняет в тексте $textToReplace замену по массиву $data (результат функции GetTableDataToReplace)
+  // функция выполняет в тексте $textToReplace замену по массиву $data (результат функции GetTableDataToReplace) и (или) подстановку defined констант
 function ReplaceInTemplate($textToReplace='', $data=[]) {
   if (!$textToReplace) return false;
-  if (false===strpos($textToReplace,'{$') || !$data) return $textToReplace;
+  if (false===strpos($textToReplace,'{')) return $textToReplace;
+    // сначала определяем defined переменные и заменяем на их значения
+  $pattern = '/\{(.+?)\}/u';
+  preg_match_all($pattern, $textToReplace, $tmp);
+  if ($tmp) foreach ($tmp[1] as $field) if (defined($field)) $textToReplace = str_replace('{'.$field.'}', constant($field), $textToReplace);
   $pattern = '/\{\$(.+?)\}/u';
   preg_match_all($pattern, $textToReplace, $tmp);
   if ($tmp) { 
-    foreach ($tmp[1] as $field) if (isset($data[$field])) $textToReplace = str_replace('{$'.$field.'}', $data[$field], $textToReplace); 
-    return $textToReplace;
+    foreach ($tmp[1] as $field) {
+	  if (defined($field)) $textToReplace = str_replace('{$'.$field.'}', constant($field), $textToReplace);
+	  if (isset($data[$field])) $textToReplace = str_replace('{$'.$field.'}', $data[$field], $textToReplace);
+    }
+	return $textToReplace;
   }
   return false;
 }
@@ -977,7 +981,7 @@ function Header2utf8($header) {
       $e = imap_mime_header_decode($text); 
       if ($e) {
         $text_ = '';
-	$charsets = ['default','utf-8'];
+    $charsets = ['default','utf-8'];
         foreach ($e as $el) if (in_array(strtolower($el->charset),$charsets)) $text_ .= $el->text; 
         if ($text_) $text = $text_; 
       }
