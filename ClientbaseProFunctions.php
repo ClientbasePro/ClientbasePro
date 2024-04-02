@@ -863,10 +863,10 @@ function ReplaceInTemplate($textToReplace='', $data=[]) {
   preg_match_all($pattern, $textToReplace, $tmp);
   if ($tmp) { 
     foreach ($tmp[1] as $field) {
-	  if (defined($field)) $textToReplace = str_replace('{$'.$field.'}', constant($field), $textToReplace);
-	  if (isset($data[$field])) $textToReplace = str_replace('{$'.$field.'}', $data[$field], $textToReplace);
+      if (defined($field)) $textToReplace = str_replace('{$'.$field.'}', constant($field), $textToReplace);
+      if (isset($data[$field])) $textToReplace = str_replace('{$'.$field.'}', $data[$field], $textToReplace);
     }
-	return $textToReplace;
+    return $textToReplace;
   }
   return false;
 }
@@ -962,8 +962,9 @@ function GetPart($mbox, $mid, $p, $partno=0) {
       $attachments = array_merge($attachments, $part['attachments']);
     }
   }
-  if ($html) $result['html'] = $html;
-  if ($plain) $result['plain'] = $plain;
+  $pattern = '/<base.+?>/ui';
+  if ($html) $result['html'] = preg_replace($pattern, '', $html);
+  if ($plain) $result['plain'] = preg_replace($pattern, '', $plain);
   if ($charset) $result['charset'] = $charset;
   if ($attachments) $result['attachments'] = $attachments;
   return $result;
@@ -977,11 +978,13 @@ function Header2utf8($header) {
   if (!$header) return false;
   if (!is_array($header)) {
     $text = imap_utf8($header);
+    $pattern = '/<base.+?>/ui';
+    $text = preg_replace($pattern, '', $text);
     if (false!==mb_stripos($text,'=?utf-8?')) { 
       $e = imap_mime_header_decode($text); 
       if ($e) {
         $text_ = '';
-    $charsets = ['default','utf-8'];
+        $charsets = ['default','utf-8'];
         foreach ($e as $el) if (in_array(strtolower($el->charset),$charsets)) $text_ .= $el->text; 
         if ($text_) $text = $text_; 
       }
