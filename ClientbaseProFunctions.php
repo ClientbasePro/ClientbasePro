@@ -73,17 +73,24 @@ function SetNumber($number, $code='', $plus='+', $format=false) {
   $strlen_ = strlen($str_);
     // сначала иностранные, начинающиеся на 810
   if (!$result && '810'==$str[0].$str[1].$str[2]) $result = $str;
-    // номера РБ
+    // Беларусь
   if (!$result && 0===strpos($str,'375') && 12==$strlen) $result = $plus.$str;
   if (!$result && defined('DEFAULT_COUNTRY_CODE') && 375==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
     // Украина
   if (!$result && 0===strpos($str,'380') && 12==$strlen) $result = $plus.$str;
   if (!$result && defined('DEFAULT_COUNTRY_CODE') && 380==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
+    // Армения
+  if (!$result && 0===strpos($str,'374') && 11==$strlen) $result = $plus.$str;
+  if (!$result && defined('DEFAULT_COUNTRY_CODE') && 374==DEFAULT_COUNTRY_CODE && 8==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
     // Молдова
-  if (!$result && 0===strpos($str,'373') && in_array($strlen,array(11,12))) $result = $plus.$str;
+  if (!$result && 0===strpos($str,'373') && in_array($strlen,[11,12])) $result = $plus.$str;
+  if (!$result && defined('DEFAULT_COUNTRY_CODE') && 373==DEFAULT_COUNTRY_CODE && in_array($strlen,[8,9])) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
     // Таджикистан
   if (!$result && 0===strpos($str,'992') && 12==$strlen) $result = $plus.$str;
   if (!$result && defined('DEFAULT_COUNTRY_CODE') && 992==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
+    // Грузия
+  if (!$result && 0===strpos($str,'995') && 11==$strlen) $result = $plus.$str;
+  if (!$result && defined('DEFAULT_COUNTRY_CODE') && 995==DEFAULT_COUNTRY_CODE && 8==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
     // Кыргызстан
   if (!$result && 0===strpos($str,'996') && 12==$strlen) $result = $plus.$str;
   if (!$result && defined('DEFAULT_COUNTRY_CODE') && 996==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
