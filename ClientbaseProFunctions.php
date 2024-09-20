@@ -238,7 +238,8 @@ function GetAccount($number='',$email='',$someId=0,$settings=[]) {
     }
     return false;
 }
-
+  // для совместимости с PHP 8 КБ делают замену count() на count_cb() и при переименовании зацепили GetAccount и переименовали в GetAccount_cb
+function GetAccount_cb($number='',$email='',$someId=0,$settings=[]) { return GetAccount($number,$email,$someId,$settings); }
 
     // функция возвращает id контактного лица 
     // поиск по номеру телефона $number (1 номер, массив номеров, список номеров через запятую) 
@@ -356,7 +357,8 @@ function UpdateAccount($accountId=0,$number='',$email='',$settings=[]) {
     if ($upd) { data_update($tableId, EVENTS_ENABLE, $upd, "id='".$accountId."' LIMIT 1"); return $upd; }
     return false;
 }
-
+  // для совместимости с PHP 8 КБ делают замену count() на count_cb() и при переименовании зацепили UpdateAccount и переименовали в UpdateAccount_cb
+function UpdateAccount_cb($accountId=0,$number='',$email='',$settings=[]) { return UpdateAccount($accountId,$number,$email,$settings); }
 
     // функция обновляет контактные данные контактного лица с id = $contactId
     // добавляет номер(-а) телефона $number (1 номер, массив номеров, список номеров через запятую) 
