@@ -1009,3 +1009,71 @@ function Header2utf8($header) {
   else foreach ($header as $key=>$value) $header[$key] = Header2utf8($value);
   return $header;
 }
+
+  // функция возвращает дату ('Y-m-d') или дату+время ('Y-m-d H:i:s', при $getTime==true) из текста $text
+  // в соавторстве с: Бородина Елена (helen@2e-web.ru)
+function GetDateTimeFromText($text='', $getTime=false) {  
+    // нет текста - возвращаем false
+  if (!$text) return false;
+	// 1. сразу есть дата - возвращаем её же отформатированную
+  if (!IsNullDate($text)) return ($getTime)    ?    date('Y-m-d H:i:s',strtotime($text))    :    date('Y-m-d',strtotime($text));
+    // варианты написания месяца
+  $m = ['января'=>1, 'февраля'=>2, 'марта'=>3, 'апреля'=>4, 'мая'=>5, 'июня'=>6, 'июля'=>7, 'августа'=>8, 'сентября'=>9, 'октября'=>10, 'ноября'=>11, 'декабря'=>12,
+		'01'=>1, '02'=>2, '03'=>3, '04'=>4, '05'=>5, '06'=>6, '07'=>7, '08'=>8, '09'=>9, '10'=>10, '11'=>11, '12'=>12,
+		'1'=>1, '2'=>2, '3'=>3, '4'=>4, '5'=>5, '6'=>6, '7'=>7, '8'=>8, '9'=>9,
+		'янв'=>1, 'фев'=>2, 'мар'=>3, 'апр'=>4, 'авг'=>8, 'сент'=>9, 'окт'=>10, 'ноя'=>11, 'дек'=>12,
+		'January'=>1, 'February'=>2, 'March'=>3, 'April'=>4, 'May'=>5, 'June'=>6, 'July'=>7, 'August'=>8, 'September'=>9, 'October'=>10, 'November'=>11, 'December'=>12,
+		'Jan'=>1, 'Feb'=>2, 'March'=>3, 'Apr'=>4, 'May'=>5, 'June'=>6, 'July'=>7, 'Aug'=>8, 'Sept'=>9, 'Oct'=>10, 'Nov'=>11, 'Dec'=>12];	
+  $year = '';
+  $month = '';
+  $day = '';
+	// 2.1. ищем дату формата день+месяц+год (2020-2059) или день+месяц (в этом случае подразумеваем текущий год)
+  $res = [];
+  $pattern = '/^([0-3]?[\d]{1})[\.|\s|\/|\-]+([0-1]?[\d]{1}|'.implode('|',array_keys($m)).')[\.|\s|\/|\-]+([202|203|204|205|2|3|4|5]+[\d]{1})|^([0-3]?[\d]{1})[\.|\s|\/|\-]+([0-1]?[\d]{1}|'.implode('|',array_keys($m)).')/ui';
+  preg_match($pattern, $text, $res);	
+  if ($res && 2<=count($res)) {
+	  // нашли д+м+г
+	if ($res[1] && $res[2] && $res[3]) { $year = $res[3]; $month = $m[$res[2]]; $day = $res[1]; }
+	  // нашли д+м
+	elseif ($res[4] && $res[5]) { $year = date('Y'); $month = $m[$res[5]]; $day = $res[4]; }
+  }
+	// 2.2. ищем относительную дату
+  if (!$year) {
+	$res = [];
+	$d = ['позавчера'=>-2, 'вчера'=>-1, 'сегодня'=>0, 'завтра'=>1, 'послезавтра'=>2, 'tomorrow'=>1, 'yesterday'=>-1, 'today'=>0];
+	$pattern = '/('.implode('|',array_keys($d)).')/ui';
+	preg_match($pattern, $text, $res);
+	if ($res[1]) {
+	  if (!$d[$res[1]]) { $year = date('Y'); $month = date('m'); $day = date('d'); }
+	  else { $time = strtotime('+'.$d[$res[1]].' days'); $year = date('Y',$time); $month = date('m',$time); $day = date('d',$time); }
+	}
+  }
+    // если есть дата и не требуется вывод времени, сразу возвращаем дату
+  if ($year && !$getTime) return date('Y-m-d', mktime(0,0,0,$month,$day,$year));
+    // не нашли дату - возвращаем false, т.к. дата нужна в любом случае
+  if (!$year) return false;
+  $hour = 0;
+  $min = 0;
+  $sec = 0;
+  	// 3.1. ищем время в формате ч+м или ч	
+  $res = [];
+  $pattern = '/[к|на|в|около|at]{1}\s([0-2]?[\d]{1})[\.|\s|\/|\-|:|ч|час|часов|часам|h|hour]+([0-5]?[\d]{1})?|[к|на|в|около|at]{1}\s([0-2]?[\d]{1})$|[at]{1}\s([0-2]?[\d]{1})[\.|\s|\/|\-|:|h|hour]*([0-5]?[\d]{1})?\s?(am|pm)?/ui';
+  preg_match($pattern, $text, $res);		
+  if ($res && 2<=count($res)) {
+	  // заполняем часы
+	if ($res[1]) $hour = $res[1];
+	elseif ($res[3]) $hour = $res[3];
+	elseif ($res[4]) $hour = ('pm'==$res[6])    ?    ($res[4]*1+12)    :    $res3[4];
+	  // заполняем минуты
+	if ($res[2]) $min = $res[2];
+  }
+	// 3.2. ищем относительное время в строке	
+  if (!$hour) {
+    $res = [];
+	$pattern = '/[через]{1}\s([0-5]?[\d]{1})[\s|минуту|минуты|минут|мин]+/ui';
+    preg_match($pattern, $text, $res);
+	if ($res[1]) { $time = strtotime('+'.$res[1].' minutes'); $hour = date('H', $time); $min = date('i', $time); $sec = date('s', $time); }
+  }
+    // сразу возвращаем дату 'Y-m-d H:i:s' (т.к. если бы требовался вывод без времени, он бы уже произошёл выше)
+  return date('Y-m-d H:i:s', mktime($hour,$min,$sec,$month,$day,$year));
+}
