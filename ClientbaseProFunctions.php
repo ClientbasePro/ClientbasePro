@@ -89,8 +89,8 @@ function SetNumber($number, $code='', $plus='+', $format=false) {
   if (!$result && 0===strpos($str,'992') && 12==$strlen) $result = $plus.$str;
   if (!$result && defined('DEFAULT_COUNTRY_CODE') && 992==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
     // Грузия
-  if (!$result && 0===strpos($str,'995') && 11==$strlen) $result = $plus.$str;
-  if (!$result && defined('DEFAULT_COUNTRY_CODE') && 995==DEFAULT_COUNTRY_CODE && 8==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
+  if (!$result && 0===strpos($str,'995') && (11==$strlen || 12==$strlen)) $result = $plus.$str;
+  if (!$result && defined('DEFAULT_COUNTRY_CODE') && 995==DEFAULT_COUNTRY_CODE && (8==$strlen || 9==$strlen)) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
     // Кыргызстан
   if (!$result && 0===strpos($str,'996') && 12==$strlen) $result = $plus.$str;
   if (!$result && defined('DEFAULT_COUNTRY_CODE') && 996==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
