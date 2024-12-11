@@ -1077,3 +1077,83 @@ function GetDateTimeFromText($text='', $getTime=false) {
     // сразу возвращаем дату 'Y-m-d H:i:s' (т.к. если бы требовался вывод без времени, он бы уже произошёл выше)
   return date('Y-m-d H:i:s', mktime($hour,$min,$sec,$month,$day,$year));
 }
+
+
+  // функция возвращает отображаемое значение поля $fieldId из строки $lineId
+  // если передаём $fieldId из числа id / add_time / user_id / status, то также нужна $tableId
+function GetFieldVisibleValue ($fieldId=0, $lineId=0, $tableId=0) {
+    // форматируем и проверяем входные данные
+  $fieldId = trim($fieldId);
+  $lineId = intval($lineId);
+  $tableId = intval($tableId);
+  if ($tableId) {
+	$e = sql_fetch_assoc(sql_query("SELECT id FROM ".TABLES_TABLE." WHERE id=$tableId LIMIT 1"));
+	if (!$e['id']) $tableId = 0;
+  }
+  if (!$fieldId || !$lineId) return false;
+  $field = '';
+  if ('id'==$fieldId) return $lineId;
+  elseif (in_array($fieldId,['add_time','user_id','status']) && !$tableId) return false;
+  if (is_numeric($fieldId) || in_array($fieldId,['add_time','user_id','status'])) $field = $fieldId;
+  elseif (is_string($fieldId)) $field = intval(substr($fieldId,1));
+  if (!$field) return false;
+    // если запрашиваем системные поля, выводим их
+  if ('add_time'==$field) {
+	$e = sql_fetch_assoc(data_select_field($tableId, $field, "id=$lineId LIMIT 1"));
+	return (!IsNullDate($e['add_time'])) ? date('d.m.Y H:i',strtotime($e['add_time'])) : false;
+  }
+  elseif ('user_id'==$field) {
+	$e = sql_fetch_assoc(sql_query("SELECT fio FROM ".USERS_TABLE." WHERE id=(SELECT user_id FROM ".DATA_TABLE.$tableId." WHERE id=$lineId LIMIT 1) LIMIT 1"));
+	return ($e['fio']) ?: false;
+  }
+  elseif ('status'==$field) {
+	$e = sql_fetch_assoc(data_select_field($tableId, $field, "id=$lineId LIMIT 1"));
+	return (0<$e['status']) ? ((2<$e['status'])?'Черновик':((2==$e['status'])?'Удалённый':'Архивный')) : 'Активный';
+  }
+    // ищем таблицу и тип поля
+  $e = sql_fetch_assoc(sql_query("SELECT table_id, type_field, type_value FROM ".FIELDS_TABLE." WHERE id=$field LIMIT 1"));
+	// id таблицы
+  if ($e['table_id']) $tableId = $e['table_id'];
+  else return false;
+	// тип поля
+  if ($e['type_field']) $type = $e['type_field'];
+  else return false;
+  $type2 = $e['type_value'];
+    // для системных полей перевызываем эту же функцию
+    // 10 - id
+  if (10==$type) return GetFieldVisibleValue('id', $lineId, $tableId);
+    // 11 - user_id
+  if (11==$type) return GetFieldVisibleValue('user_id', $lineId, $tableId);
+    // 12 - add_time
+  if (12==$type) return GetFieldVisibleValue('add_time', $lineId, $tableId);
+    // 13 - status
+  if (13==$type) return GetFieldVisibleValue('status', $lineId, $tableId);
+    // находим эталонное значение из БД
+  $e = sql_fetch_assoc(sql_query("SELECT f$field AS value FROM ".DATA_TABLE.$tableId." WHERE id=$lineId LIMIT 1"));
+  $value = $e['value'];
+    // в зависимости от типа поля форматируем вывод
+    // дата
+  if (2==$type) {
+	if (IsNullDate($value)) return '';
+	return (1==$type2) ? date('d.m.Y H:i',strtotime($value)) : date('d.m.Y',strtotime($value));
+  }
+    // поле связи
+  if (5==$type) {
+    $type2 = explode('|', $type2);
+	if (!intval($type2[0]) || !intval($type2[1])) return false;
+	return GetFieldVisibleValue($type2[1], $value);
+  }
+    // пользователь
+  if (7==$type) {
+    $value = intval($value);
+    return (array_values(GetArrayFromTable(0,0,"id=$value LIMIT 1"))[0]) ?: '';	
+  }
+    // группа доступа
+  if (8==$type || 14==$type) {
+    $value = intval($value);
+	if (!$value) return '';
+	$e = sql_fetch_assoc(sql_query("SELECT name FROM ".GROUPS_TABLE." WHERE id=$value LIMIT 1"));
+    return ($e['name']) ?: '';	
+  }
+  return $value;
+}
