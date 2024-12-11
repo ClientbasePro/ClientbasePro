@@ -1081,6 +1081,7 @@ function GetDateTimeFromText($text='', $getTime=false) {
 
   // функция возвращает отображаемое значение поля $fieldId из строки $lineId
   // если передаём $fieldId из числа id / add_time / user_id / status, то также нужна $tableId
+  // в соавторстве с: Бородина Елена (helen@2e-web.ru)
 function GetFieldVisibleValue ($fieldId=0, $lineId=0, $tableId=0) {
     // форматируем и проверяем входные данные
   $fieldId = trim($fieldId);
