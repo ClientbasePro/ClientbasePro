@@ -886,6 +886,67 @@ function ReplaceInTemplate($textToReplace='', $data=[]) {
   return false;
 }
 
+  // функция возвращает массив файлов, которые указаны как поля в шаблоне рассылки $blankId, для строки $lineId
+  // $saveAsLocal false - вернёт ссылки на файлы, возвращаемые КБшной функцией get_file_path
+  // $saveAsLocal true - вернёт прямые ссылки на файлы, доступные для скачивания
+function GetFilesFromTemplate($blankId=0, $lineId=0, $saveAsLocal=false) {
+  $files = [];
+    // проверка вх.данных
+  $blankId = intval($blankId);
+  $lineId = intval($lineId);
+  if (!$blankId || !$lineId) return false;
+    // читаем фодержимаое шаблона рассылки/печати
+  $form = sql_select_array(FORMS_TABLE, "id=$blankId LIMIT 1");
+  if (!$form['table_id'] || !$form['body_form']) return false;
+  $line_ = data_select_array($form['table_id'], "id=$lineId LIMIT 1");
+    // собираем поля непосредственно в самой записи
+  $e = [];
+  $pattern = '/{\$field(\d{2,7})}/';
+  preg_match_all($pattern, $form['body_form'], $e);
+  if ($e[1]) {
+    $res = sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE type_field IN (6,9) AND table_id='".$form['table_id']."' AND id IN (".implode(',',$e[1]).")");
+    while ($row=sql_fetch_assoc($res)) {
+      $fls = explode("\r\n", $line_['f'.$row['id']]);
+      foreach ($fls as $name) {
+        $local = get_file_path($row['id'], $lineId, $name);
+        if (file_get_contents($local)) $files[] = ['local'=>$local, 'name'=>$name];
+      }
+    }
+  }
+    // и теперь собираем записи в связанных таблицах
+  $e = [];
+  $pattern = '/{\$field(\d{2,7})\.field(\d{2,7})}/';
+  preg_match_all($pattern, $form['body_form'], $e);
+  if ($e[1] && $e[2]) {
+    $e[3] = array_flip($e[2]);
+    $res = sql_query("SELECT id, table_id FROM ".FIELDS_TABLE." WHERE type_field IN (6,9) AND id IN (".implode(',',$e[2]).")");
+    while ($row=sql_fetch_assoc($res)) {
+      $lineId_ = (is_array($line_['f'.$e[1][$e[3][$row['id']]]]) && 0<$line_['f'.$e[1][$e[3][$row['id']]]]['raw']) ? $line_['f'.$e[1][$e[3][$row['id']]]]['raw'] : intval($line_['f'.$e[1][$e[3][$row['id']]]]);
+      if ($lineId_) {
+        $f = sql_fetch_assoc(data_select_field($row['table_id'], 'f'.$row['id'].' AS files', "id=$lineId_ LIMIT 1"));
+        $fls = explode("\r\n", $f['files']);
+        foreach ($fls as $name) {
+          $local = get_file_path($row['id'], $lineId_, $name);
+          if (file_get_contents($local)) $files[] = ['local'=>$local, 'name'=>$name];
+        }
+      }
+    }
+  }
+  if (!$files) return false;
+    // не требуются локальные ссылки на файлы - сразу возвращаем $files
+  if (!$saveAsLocal) return $files;
+    // если требуются - сохраняем копии локально в $path
+  $path = 'messagefiles/'.date('Y').'/'.date('m').'/'.date('d');
+  if (!file_exists($path)) mkdir($path, 0755, true);
+  foreach ($files as $index=>$file) {
+    $content = file_get_contents($file['local']);
+    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $local = $path.'/'.MakeRandom('GUID').'.'.$ext;
+    if (file_put_contents($local,$content)) $files[$index]['local'] = $local;
+    else unset($files[$index]);
+  }
+  return $files;
+}
 
   // функция возвращает данные из сообщения (массив ['header', 'body'=>['html','plain'], 'charset', 'attachments'])
   // $mbox - IMAP stream
