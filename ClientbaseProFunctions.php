@@ -1230,5 +1230,5 @@ function GetFieldVisibleValue ($fieldId=0, $lineId=0, $tableId=0) {
 
   // кастомные функции для перехода на PHP 8.*
 function array_filter_cbpro($array=[], $callback=null, $mode=0) {
-  return ($array) ? false : array_filter_cbpro($array, $callback, $mode);
+  return (!$array || !is_array($array)) ? false : array_filter_cbpro($array, $callback, $mode);
 }
