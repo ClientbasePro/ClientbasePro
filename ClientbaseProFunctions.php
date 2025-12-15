@@ -1234,5 +1234,5 @@ function array_filter_cbpro($array=[], $callback=null, $mode=0) {
 }
 
 function in_array_cbpro($needle=null, $haystack=[], $strict=false) {
-  return (!$haystack || !is_array($haystack) || !$needle)    ?    false    :    in_array_cbpro($needle, $haystack, $strict);
+  return (!$haystack || !is_array($haystack) || !$needle)    ?    false    :    in_array($needle, $haystack, $strict);
 }
