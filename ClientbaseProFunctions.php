@@ -45,7 +45,7 @@ function GetCurrency($date='', $currency='EUR') {
         $pattern = '/<Valute ID=\"R.{5}\".+?<CharCode>'.$currency.'<\/CharCode>(.*?)<\/Valute\>/is';
         preg_match($pattern, $response, $m);
         preg_match("/<Value>(.*?)<\/Value>/is", $m[1], $r);
-    preg_match("/<Nominal>(.*?)<\/Nominal>/is", $m[1], $r2);
+    	preg_match("/<Nominal>(.*?)<\/Nominal>/is", $m[1], $r2);
         return floatval(str_replace(",", ".", $r[1])/((1<$r2[1])?$r2[1]:1));
     }
     curl_close($curl);
@@ -153,7 +153,8 @@ function SetNumber($number, $code='', $plus='+', $format=false) {
     // $settings - массив настроек таблиц и полей для поиска
     // ключи ACCOUNT_TABLE, ACCOUNT_FIELD_PHONE, ACCOUNT_FIELD_EMAIL, ACCOUNT_FIELD_DOUBLE, CONTACT_TABLE, CONTACT_FIELD_PHONE, CONTACT_FIELD_EMAIL, CONTACT_FIELD_ACCOUNTID, CONTACT_FIELD_DOUBLE
 function GetAccount($number='',$email='',$someId=0,$settings=[]) {
-        // формируем массив телефонных номеров из $number
+    $numbers = $emails = [];
+	    // формируем массив телефонных номеров из $number
     if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
     elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
         // формируем массив адресов E-mail из $email
@@ -198,7 +199,7 @@ function GetAccount($number='',$email='',$someId=0,$settings=[]) {
         }
         else $idCond = " AND id<>'".$someId."' ";
     }
-    if ($accountFieldDouble && !$settings) $doubleCond = " AND f".$accountFieldDouble."='' ";
+    if ($accountFieldDouble && !$settings) $doubleCond = " AND (f".$accountFieldDouble."='' OR f".$accountFieldDouble." IS NULL) ";
         // 1 попытка - прямое совпадение или LIKE
     $e = sql_fetch_assoc(data_select_field($accountTableId, 'id', "status=0 AND ({$mainCond}) {$idCond} {$doubleCond} ORDER BY id DESC LIMIT 1"));
     if ($e['id']) return $e['id'];
@@ -223,7 +224,7 @@ function GetAccount($number='',$email='',$someId=0,$settings=[]) {
     if (!$contactTableId && 42==$accountTableId) {
         $contactTableId = 51;
         $contactFieldAccountId = 545;
-    }   
+    }
     if ($contactTableId && $contactFieldAccountId) {
         $e = sql_fetch_assoc(sql_query("SELECT id FROM ".FIELDS_TABLE." WHERE id='".$contactFieldAccountId."' AND table_id='".$contactTableId."' LIMIT 1"));
         if (!$e['id']) return false;    
@@ -253,7 +254,8 @@ function GetAccount_cb($number='',$email='',$someId=0,$settings=[]) { return Get
     // из поиска исключается контрагент с id $someId
     // $settings - массив настроек таблиц и полей для поиска, ключи CONTACT_TABLE, CONTACT_FIELD_PHONE, CONTACT_FIELD_EMAIL, CONTACT_FIELD_DOUBLE
 function GetContact($number='',$email='',$someId=0,$settings=[]) {
-        // формируем массив телефонных номеров из $number
+    $numbers = $emails = [];
+	    // формируем массив телефонных номеров из $number
     if (is_array($number)) { foreach ($number as $num) if ($num=SetNumber($num)) $numbers[$num] = $num; }
     elseif ($number) foreach (explode(',',$number) as $num) if ($num=SetNumber($num)) $numbers[$num] = $num;
         // формируем массив адресов E-mail из $email
@@ -321,7 +323,8 @@ function GetContact($number='',$email='',$someId=0,$settings=[]) {
     // или эл.почте $email (1 адрес, массив адресов, список адресов через запятую и точку с запятой) 
     // $settings - массив настроек таблиц и полей для поиска, ключи ACCOUNT_TABLE, ACCOUNT_FIELD_PHONE, ACCOUNT_FIELD_EMAIL
 function UpdateAccount($accountId=0,$number='',$email='',$settings=[]) {
-        // проверка входных данных
+    $numbers = $emails = [];
+		// проверка входных данных
     $accountId = intval($accountId);
     if (!$accountId) return false;
         // формируем массив телефонных номеров из $number
@@ -371,7 +374,8 @@ function UpdateAccount_cb($accountId=0,$number='',$email='',$settings=[]) { retu
     // или эл.почте $email (1 адрес, массив адресов, список адресов через запятую и точку с запятой) 
     // $settings - массив настроек таблиц и полей для поиска, ключи CONTACT_TABLE, CONTACT_FIELD_PHONE, CONTACT_FIELD_EMAIL
 function UpdateContact($contactId=0,$number='',$email='',$settings=[]) {
-        // проверка входных данных
+    $numbers = $emails = [];
+		// проверка входных данных
     $contactId = intval($contactId);
     if (!$contactId) return false;
         // формируем массив телефонных номеров из $number
@@ -426,7 +430,7 @@ function GetIPAddressData($IP='') {
   curl_close($ch);
     // парсим ответ
   $xml = simplexml_load_string($string);
-  $data = '';
+  $data = [];
   foreach ($xml as $key=>$value) {
     foreach ($value as $key2=>$value2) {
       if ('city'==$key2) $data['city'] = $value2;
@@ -442,7 +446,7 @@ function GetIPAddressData($IP='') {
     // функция добавляет $arrayToAdd и убирает $arrayToDelete значения в поле $fieldId в таблице $tableId в записи по условиям $cond (если $cond число, то считается id=$cond)
     // $arrayToAdd может быть строкой или массивом
     // $arrayToDelete может быть строкой или массивом или строкой 'delete', в этом случае будет удалён массив $arrayToAdd (пережиток предыдущей версии функции)
-function SetCheckList($tableId, $fieldId, $cond, $arrayToAdd=[], $arrayToDelete=[]) {
+function SetCheckList($tableId=0, $fieldId=0, $cond='', $arrayToAdd=[], $arrayToDelete=[]) {
     // проверка входных данных
   if (!$fieldId || !$cond || (!$arrayToAdd && !$arrayToDelete)) return false;
     // приводим $fieldId к числовому виду
@@ -458,31 +462,31 @@ function SetCheckList($tableId, $fieldId, $cond, $arrayToAdd=[], $arrayToDelete=
   if (is_numeric($cond)) $cond = "id='".$cond."' LIMIT 1";
     // если $arrayToAdd строка, переводим в массив
   if (!is_array($arrayToAdd)) $arrayToAdd = [$arrayToAdd];
-  $arrayToAdd = array_filter($arrayToAdd);
+  $arrayToAdd = ($arrayToAdd) ? array_filter($arrayToAdd) : [];
     // если $arrayToDelete строка, переводим в массив
   if (!is_array($arrayToDelete) && 'delete'!=$arrayToDelete) $arrayToDelete = [$arrayToDelete];
   elseif ('delete'==$arrayToDelete) { $arrayToDelete = $arrayToAdd; $arrayToAdd = []; }
-  $arrayToDelete = array_filter($arrayToDelete);
+  $arrayToDelete = ($arrayToDelete) ? array_filter($arrayToDelete) : [];
     // получаем список всех галочек из настроек поля
   $e = sql_fetch_assoc(sql_select_field(FIELDS_TABLE, "type_value", "id='".$fieldId."' LIMIT 1", $tableId));
-  $all = explode("\r\n", $e['type_value']);
+  $all = ($e['type_value']) ? explode("\r\n", $e['type_value']) : [];
     // проходим по всем записям по условию $cond
   $res = sql_query("SELECT id, f".$fieldId." AS field FROM ".DATA_TABLE.$tableId." WHERE ".$cond);
   while ($row=sql_fetch_assoc($res)) {
       // список отмеченных галочек в текущей строке
-    $checked = explode("\r\n", $row['field']);
+    $checked = ($row['field']) ? explode("\r\n", $row['field']) : [];
       // проходим по списку всех галочек и добавляем/убираем значение в итоговый массив $data
     $data = [];
-    foreach ($all as $current) if ((in_array($current,$checked) && !in_array($current,$arrayToDelete)) || in_array($current,$arrayToAdd)) $data[] = $current;
+    foreach ($all as $current) if (($checked && in_array($current,$checked) && (!$arrayToDelete || !in_array($current,$arrayToDelete))) || ($arrayToAdd && in_array($current,$arrayToAdd))) $data[] = $current;
       // обновляем текущую строку
-    data_update($tableId, EVENTS_ENABLE, ['f'.$fieldId=>implode("\r\n",$data)], "id='".$row['id']."' LIMIT 1");  
+    data_update($tableId, EVENTS_ENABLE, ['f'.$fieldId=>(($data)?implode("\r\n",$data):'')], "id='".$row['id']."' LIMIT 1");  
   }
   return true;
 }
 
 
   // функция очищает поле $fieldId строки $lineId таблицы $tableID и удаляет привязанные файлы
-function DeleteFiles($tableId, $fieldId, $lineId) {
+function DeleteFiles($tableId=0, $fieldId=0, $lineId=0) {
     // проверка входных данных
   if (!$tableId || !$fieldId || !$lineId) return false;
   $tableId = intval($tableId);
@@ -501,7 +505,7 @@ function DeleteFiles($tableId, $fieldId, $lineId) {
 
 
   // функция копирует файлы из $source в $destination (оба - массивы ('tableId', 'lineId', 'fieldId'))
-function CopyFiles($source, $destination) {
+function CopyFiles($source=[], $destination=[]) {
     // проверка входных данных
   if (!$source || !is_array($source) || !$destination || !is_array($destination)) return false;
   $source['tableId'] = intval($source['tableId']);
@@ -513,13 +517,16 @@ function CopyFiles($source, $destination) {
   if (!$source['tableId'] || !$source['lineId'] || !$source['fieldId'] || !$destination['tableId'] || !$destination['lineId'] || !$destination['fieldId']) return false;
     // получаем список файлов в источнике
   $source['files'] = sql_fetch_assoc(data_select_field($source['tableId'], 'f'.$source['fieldId'].' AS files', "id='".$source['lineId']."' LIMIT 1"));
-  $sourceFiles = explode("\r\n", trim($source['files']['files']));
+  $sourceFiles = ($source['files']['files'])    ?    explode("\r\n", trim($source['files']['files']))    :    [];
+  $sourceFiles = ($sourceFiles)    ?    array_filter($sourceFiles, 'trim')    :    [];
+  if (!$sourceFiles) return false;
     // получаем список файлов в получателе
   $destination['files'] = sql_fetch_assoc(data_select_field($destination['tableId'], 'f'.$destination['fieldId'].' AS files', "id='".$destination['lineId']."' LIMIT 1"));
-  $destinationFiles = explode("\r\n", $destination['files']['files']);
+  $destinationFiles = ($destination['files']['files'])    ?    explode("\r\n", $destination['files']['files'])    :    [];
+  $destinationFiles = ($destinationFiles)    ?    array_filter($destinationFiles, 'trim')    :    [];
     // проходим по всем файлам источника и копируем их, имена файлов добавляем в $destinationFiles
   foreach ($sourceFiles as $file) {
-    if (!in_array($file,$destinationFiles)) {
+    if (!$destinationFiles || !in_array($file,$destinationFiles)) {
         // создаём папку
       create_data_file_dirs($destination['fieldId'], $destination['lineId'], $file);
         // копируем файл и добавляем его имя в $destination['files']
@@ -529,10 +536,9 @@ function CopyFiles($source, $destination) {
     }
   }
     // удаляем пустые элементы $destinationFiles
-  $destinationFiles = array_filter($destinationFiles);
   $destinationFiles = array_unique($destinationFiles);
     // обновляем получателя
-  data_update($destination['tableId'], EVENTS_ENABLE, array('f'.$destination['fieldId']=>implode("\r\n",$destinationFiles)), "id='".$destination['lineId']."' LIMIT 1");
+  data_update($destination['tableId'], EVENTS_ENABLE, ['f'.$destination['fieldId']=>implode("\r\n",$destinationFiles)], "id='".$destination['lineId']."' LIMIT 1");
   return true;
 }
 
@@ -548,8 +554,8 @@ function AddWorkDays($start='',$pause=0,$holidays=[]) {
   $tmp = function($date) { return date('Y-m-d',strtotime($date)); };
     // массив выходных дней
   if (-1!=$holidays) {
-    if (!$holidays || !is_array($holidays)) { if (intval(HOLIDAYS_TABLE) && intval(HOLIDAYS_FIELD_DATE)) $holidays = GetArrayFromTable(HOLIDAYS_TABLE,HOLIDAYS_FIELD_DATE, 0, $tmp); }
-    else $holidays = array_map($tmp,$holidays);   
+    if (!$holidays || !is_array($holidays)) { if (defined('HOLIDAYS_TABLE') && defined('HOLIDAYS_FIELD_DATE')) $holidays = GetArrayFromTable(HOLIDAYS_TABLE,HOLIDAYS_FIELD_DATE, 0, $tmp); }
+    else $holidays = array_map($tmp, $holidays);   
   }
     // расчёт итоговой даты
   $j = 0;
@@ -901,7 +907,7 @@ function GetFilesFromTemplate($blankId=0, $lineId=0, $saveAsLocal=false) {
   $blankId = intval($blankId);
   $lineId = intval($lineId);
   if (!$blankId || !$lineId) return false;
-    // читаем фодержимаое шаблона рассылки/печати
+    // читаем содержимое шаблона рассылки/печати
   $form = sql_select_array(FORMS_TABLE, "id=$blankId LIMIT 1");
   if (!$form['table_id'] || !$form['body_form']) return false;
   $line_ = data_select_array($form['table_id'], "id=$lineId LIMIT 1");
