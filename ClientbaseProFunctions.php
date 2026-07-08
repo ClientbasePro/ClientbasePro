@@ -37,7 +37,7 @@ function GetCurrency($date='', $currency='EUR') {
     if (!$date) $date = date("d/m/Y");
     else $date = date("d/m/Y", strtotime($date));
         // ссылка на сайте ЦБ РФ
-    $url = 'http://www.cbr.ru/scripts/XML_daily.asp?date_req='.$date;
+    $url = 'https://www.cbr.ru/scripts/XML_daily.asp?date_req='.$date;
         // запрос к сайту ЦБ РФ
     $curl = curl_init($url);
     curl_setopt_array($curl, [CURLOPT_RETURNTRANSFER=>true]);
@@ -99,10 +99,10 @@ function SetNumber($number, $code='', $plus='+', $format=false) {
   if (!$result && defined('DEFAULT_COUNTRY_CODE') && 998==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
     // Туркменистан
   if (!$result && 0===strpos($str,'993') && 12==$strlen) $result = $plus.$str;
-  if (!$result && defined('DEFAULT_COUNTRY_CODE') && 998==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
+  if (!$result && defined('DEFAULT_COUNTRY_CODE') && 993==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
     // Азербайджан
   if (!$result && 0===strpos($str,'994') && 12==$strlen) $result = $plus.$str;
-  if (!$result && defined('DEFAULT_COUNTRY_CODE') && 998==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;	
+  if (!$result && defined('DEFAULT_COUNTRY_CODE') && 994==DEFAULT_COUNTRY_CODE && 9==$strlen) $result = $plus.DEFAULT_COUNTRY_CODE.$str;	
     // ОАЭ
   if (!$result && 0===strpos($str,'971') && (11==$strlen || 12==$strlen)) $result = $plus.$str;
   if (!$result && defined('DEFAULT_COUNTRY_CODE') && 971==DEFAULT_COUNTRY_CODE && (8==$strlen || 9==$strlen)) $result = $plus.DEFAULT_COUNTRY_CODE.$str;
@@ -847,7 +847,7 @@ function GetTableDataToReplace($tableId=0, $lineId=0, $fields=[], $users=[], $gr
       $id = (is_array($value)) ? intval($value['raw']) : intval($value);
       if ($table) {
         if ($id) {
-          $line_ = sql_fetch_assoc(data_select($table, "id='".$id."' LIMIT 1"));
+          $line_ = sql_fetch_assoc(data_select($table, "id=$id LIMIT 1"));
           foreach ($line_ as $name2=>$value2) if ($fields[$table][$name2]['name']) {
             if (5==$fields[$table][$name2]['type']) {
               $f2 = explode("|",$fields[$table][$name2]['values']);
@@ -857,22 +857,21 @@ function GetTableDataToReplace($tableId=0, $lineId=0, $fields=[], $users=[], $gr
                 if ($id_=$systemFields[$fields[$table2]['f'.$show2]['type']]) $f2_ = $id_;
                 else $f2_ = 'f'.$show2;
                 $line2_ = sql_fetch_assoc(data_select_field($table2, $f2_, "id='".$value2."' LIMIT 1"));
-                $data[$key.'.'.$fields[$table][$name2]['name']] = GetFormattedFieldData($line2_[$f2_],$fields[$table2]['f'.$show2],$users,$groups);
+                $data[$key.'.'.$fields[$table][$name2]['name']] = $data[$field['id'].'.'.$name2] = $data[str_replace('f','field',$field['id']).'.'.str_replace('f','field',$name2)] = GetFormattedFieldData($line2_[$f2_],$fields[$table2]['f'.$show2],$users,$groups);
               }
             }
             else {
-              $data[$key.'.'.$fields[$table][$name2]['name']] = GetFormattedFieldData($value2,$fields[$table][$name2],$users,$groups);
-              if ('f'.$show==$name2) $data[$key] = GetFormattedFieldData($value2,$fields[$table][$name2],$users,$groups);
+              $data[$key.'.'.$fields[$table][$name2]['name']] = $data[$field['id'].'.'.$name2] = $data[str_replace('f','field',$field['id']).'.'.str_replace('f','field',$name2)] = GetFormattedFieldData($value2,$fields[$table][$name2],$users,$groups);
+              if ('f'.$show==$name2) $data[$key] = $data[$field['id']] = $data[str_replace('f','field',$field['id'])] = GetFormattedFieldData($value2,$fields[$table][$name2],$users,$groups);
             }
           }
         }
         else foreach ($fields[$table] as $name2=>$field2) if ($field2['id']) $data[$key.'.'.$name2] = '';
       }
     }
-    else {
-      $value = GetFormattedFieldData($value,$field,$users,$groups);
-      $data[$key] = $value;
-    }
+	  // 8.7.26 - также дописываем в $data то же значение $value, но с ключом id поля
+	  // например, в названии документа шаблона печати КБ формирует код как "....{$field123456}"
+    else $data[$key] = $data[$field['id']] = $data[str_replace('f','field',$field['id'])] = GetFormattedFieldData($value,$field,$users,$groups);
   }  
   return ($data) ? $data : false;
 }
@@ -1104,7 +1103,7 @@ function GetDateTimeFromText($text='', $getTime=false) {
   $res = [];
   $pattern = '/^([0-3]?[\d]{1})[\.|\s|\/|\-]+([0-1]?[\d]{1}|'.implode('|',array_keys($m)).')[\.|\s|\/|\-]+([202|203|204|205|2|3|4|5]+[\d]{1})|^([0-3]?[\d]{1})[\.|\s|\/|\-]+([0-1]?[\d]{1}|'.implode('|',array_keys($m)).')/ui';
   preg_match($pattern, $text, $res);	
-  if ($res && 2<=count($res)) {
+  if ($res && is_array($res) && 2<=count($res)) {
 	  // нашли д+м+г
 	if ($res[1] && $res[2] && $res[3]) { $year = $res[3]; $month = $m[$res[2]]; $day = $res[1]; }
 	  // нашли д+м
@@ -1116,7 +1115,7 @@ function GetDateTimeFromText($text='', $getTime=false) {
 	$d = ['позавчера'=>-2, 'вчера'=>-1, 'сегодня'=>0, 'завтра'=>1, 'послезавтра'=>2, 'tomorrow'=>1, 'yesterday'=>-1, 'today'=>0];
 	$pattern = '/('.implode('|',array_keys($d)).')/ui';
 	preg_match($pattern, $text, $res);
-	if ($res[1]) {
+	if ($res && is_array($res) && $res[1]) {
 	  if (!$d[$res[1]]) { $year = date('Y'); $month = date('m'); $day = date('d'); }
 	  else { $time = strtotime('+'.$d[$res[1]].' days'); $year = date('Y',$time); $month = date('m',$time); $day = date('d',$time); }
 	}
@@ -1132,7 +1131,7 @@ function GetDateTimeFromText($text='', $getTime=false) {
   $res = [];
   $pattern = '/[к|на|в|около|at]{1}\s([0-2]?[\d]{1})[\.|\s|\/|\-|:|ч|час|часов|часам|h|hour]+([0-5]?[\d]{1})?|[к|на|в|около|at]{1}\s([0-2]?[\d]{1})$|[at]{1}\s([0-2]?[\d]{1})[\.|\s|\/|\-|:|h|hour]*([0-5]?[\d]{1})?\s?(am|pm)?/ui';
   preg_match($pattern, $text, $res);		
-  if ($res && 2<=count($res)) {
+  if ($res && is_array($res) && 2<=count($res)) {
 	  // заполняем часы
 	if ($res[1]) $hour = $res[1];
 	elseif ($res[3]) $hour = $res[3];
@@ -1145,7 +1144,7 @@ function GetDateTimeFromText($text='', $getTime=false) {
     $res = [];
 	$pattern = '/[через]{1}\s([0-5]?[\d]{1})[\s|минуту|минуты|минут|мин]+/ui';
     preg_match($pattern, $text, $res);
-	if ($res[1]) { $time = strtotime('+'.$res[1].' minutes'); $hour = date('H', $time); $min = date('i', $time); $sec = date('s', $time); }
+	if ($res && is_array($res) && $res[1]) { $time = strtotime('+'.$res[1].' minutes'); $hour = date('H', $time); $min = date('i', $time); $sec = date('s', $time); }
   }
     // сразу возвращаем дату 'Y-m-d H:i:s' (т.к. если бы требовался вывод без времени, он бы уже произошёл выше)
   return date('Y-m-d H:i:s', mktime($hour,$min,$sec,$month,$day,$year));
